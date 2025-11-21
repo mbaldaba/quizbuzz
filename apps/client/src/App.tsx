@@ -1,35 +1,78 @@
-import { useState } from "react";
-import reactLogo from "./assets/react.svg";
-import viteLogo from "/vite.svg";
-import "./App.css";
+import { ActiveRoomEnum } from "./common/types";
+import StudentJoinView from "./components/StudentJoinView";
 
 function App() {
-  const [count, setCount] = useState(0);
+  const activeRoomsFromServer = [
+		{
+			id: 1,
+			roomNumber: "YH82",
+			title: "Regional Science Quiz Bee Elimination Round",
+			hostName: "Teacher Jessa",
+			status: ActiveRoomEnum.WAITING,
+			players: 4,
+			maxPlayers: 20,
+			requiresPassword: true,
+		},
+		{
+			id: 2,
+			roomNumber: "FD3W",
+			title: "Battle of the Brains - Semi Finals",
+			hostName: "Teacher Mae",
+			status: ActiveRoomEnum.ONGOING,
+			players: 18,
+			maxPlayers: 20,
+			requiresPassword: true,
+		},
+		{
+			id: 3,
+			roomNumber: "COM9",
+			title: "Battle of the Computer Whiz",
+			hostName: "Teacher Jam",
+			status: ActiveRoomEnum.ONGOING,
+			players: 16,
+			maxPlayers: 16,
+			requiresPassword: true,
+		},
+		{
+			id: 4,
+			roomNumber: "SAM2",
+			title: "Quiz Participants Briefing",
+			hostName: "Teacher Mon",
+			status: ActiveRoomEnum.WAITING,
+			players: 36,
+			requiresPassword: false,
+		},
+		{
+			id: 5,
+			roomNumber: "FD3W",
+			title: "Power Quiz: General Information Eliminations",
+			hostName: "Teacher Raymond",
+			status: ActiveRoomEnum.ONGOING,
+			players: 72,
+			requiresPassword: true,
+		},
+		{
+			id: 6,
+			roomNumber: "ARTS",
+			title: "Philippine History Semis",
+			hostName: "Teacher Rizal",
+			status: ActiveRoomEnum.ONGOING,
+			players: 28,
+			maxPlayers: 30,
+			requiresPassword: true,
+		},
+	];
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  );
+		<>
+			<StudentJoinView
+				activeRooms={activeRoomsFromServer}
+				onJoin={(roomNumber, password) => {
+					// TODO: join endpoint here
+				}}
+			/>
+		</>
+	);
 }
 
 export default App;
