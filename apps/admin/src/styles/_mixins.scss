@@ -1,0 +1,38 @@
+@use 'variables' as *;
+
+// Responsive mixins
+@mixin respond-to($breakpoint) {
+  @if $breakpoint == sm {
+    @media (min-width: $breakpoint-sm) {
+      @content;
+    }
+  } @else if $breakpoint == md {
+    @media (min-width: $breakpoint-md) {
+      @content;
+    }
+  } @else if $breakpoint == lg {
+    @media (min-width: $breakpoint-lg) {
+      @content;
+    }
+  } @else if $breakpoint == xl {
+    @media (min-width: $breakpoint-xl) {
+      @content;
+    }
+  }
+}
+
+// Focus ring mixin
+@mixin focus-ring {
+  outline: none;
+  &:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px $sky-500;
+    border-color: $sky-500;
+  }
+}
+
+// Transition mixin
+@mixin transition($properties: all) {
+  transition: $properties 0.2s ease-in-out;
+}
+

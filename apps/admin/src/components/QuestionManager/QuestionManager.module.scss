@@ -1,0 +1,356 @@
+@use '../../styles/variables' as *;
+@use '../../styles/mixins' as *;
+
+// Question Form
+.questionForm {
+  margin-bottom: $spacing-md;
+  padding: $spacing-md;
+  border-radius: $radius-lg;
+  border: 1px solid $slate-800;
+  background-color: rgba($slate-900, 0.6);
+  width: 100%;
+  box-sizing: border-box;
+  overflow-wrap: break-word;
+  
+  @include respond-to(sm) {
+    margin-bottom: $spacing-lg;
+    padding: $spacing-md;
+    border-radius: $radius-xl;
+  }
+  
+  .formRow {
+    display: flex;
+    align-items: center;
+    gap: $spacing-sm;
+    width: 100%;
+    box-sizing: border-box;
+    
+    .choiceInputGroup {
+      display: flex;
+      align-items: center;
+      gap: $spacing-sm;
+      width: 100%;
+      min-width: 0;
+      
+      .choiceLabel {
+        font-size: 0.75rem;
+        font-weight: 500;
+        color: $slate-300;
+        width: 1.5rem;
+        flex-shrink: 0;
+        
+        @include respond-to(sm) {
+          font-size: 0.875rem;
+          width: 1.5rem;
+        }
+      }
+      
+      .choiceInput {
+        flex: 1;
+        min-width: 0;
+        max-width: 100%;
+        box-sizing: border-box;
+      }
+    }
+  }
+}
+
+// Question Manager
+.questionItem {
+  border-radius: $radius-lg;
+  border: 1px solid $slate-800;
+  background-color: rgba($slate-900, 0.6);
+  padding: 0.625rem $spacing-md;
+  margin-bottom: $spacing-sm;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow-wrap: break-word;
+  
+  @include respond-to(sm) {
+    border-radius: $radius-xl;
+    padding: 0.625rem $spacing-md;
+    margin-bottom: $spacing-md;
+  }
+  
+  .questionContent {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: $spacing-sm;
+    width: 100%;
+    box-sizing: border-box;
+    
+    @include respond-to(sm) {
+      gap: $spacing-md;
+    }
+    
+    .questionInfo {
+      flex: 1;
+      min-width: 0;
+      max-width: 100%;
+      
+      .questionTypeBadge {
+        font-size: 0.5625rem;
+        font-weight: 600;
+        color: $sky-400;
+        background-color: rgba($sky-500, 0.15);
+        border: 1px solid rgba($sky-500, 0.4);
+        border-radius: 0.25rem;
+        padding: 0.125rem 0.375rem;
+        white-space: nowrap;
+        display: inline-block;
+        margin-bottom: $spacing-xs;
+        
+        @include respond-to(sm) {
+          font-size: 0.625rem;
+          padding: 0.125rem 0.5rem;
+        }
+      }
+      
+      .questionText {
+        font-size: 0.75rem;
+        font-weight: 500;
+        color: $slate-50;
+        margin-bottom: $spacing-sm;
+        word-break: break-word;
+        
+        @include respond-to(sm) {
+          font-size: 0.875rem;
+        }
+      }
+      
+      .questionChoices {
+        list-style: none;
+        padding: 0;
+        margin: 0 0 $spacing-sm 0;
+        
+        li {
+          font-size: 0.625rem;
+          color: $slate-400;
+          margin-bottom: 0.125rem;
+          word-break: break-word;
+          
+          @include respond-to(sm) {
+            font-size: 0.75rem;
+            margin-bottom: 0.25rem;
+          }
+        }
+      }
+      
+      .questionAnswer {
+        font-size: 0.625rem;
+        color: $emerald-400;
+        word-break: break-word;
+        
+        @include respond-to(sm) {
+          font-size: 0.75rem;
+        }
+      }
+    }
+    
+    .questionActions {
+      display: flex;
+      gap: 0.375rem;
+      flex-shrink: 0;
+      
+      @include respond-to(sm) {
+        gap: $spacing-sm;
+      }
+    }
+  }
+}
+
+.roomListEmpty {
+  font-size: 0.75rem;
+  color: $slate-500;
+  font-style: italic;
+  
+  @include respond-to(sm) {
+    font-size: 0.875rem;
+  }
+}
+
+// Form Elements
+.formGroup {
+  margin-bottom: $spacing-md;
+  
+  @include respond-to(sm) {
+    margin-bottom: $spacing-md;
+  }
+}
+
+.formLabel {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: $slate-200;
+  margin-bottom: 0.375rem;
+  
+  @include respond-to(sm) {
+    font-size: 0.875rem;
+  }
+}
+
+.formInput,
+.formTextarea,
+.formSelect {
+  width: 100%;
+  max-width: 100%;
+  border-radius: $radius-md;
+  border: 1px solid $slate-700;
+  background-color: rgba($slate-900, 0.6);
+  padding: 0.625rem $spacing-sm;
+  color: $slate-50;
+  font-size: 0.875rem;
+  min-height: 2.5rem;
+  box-sizing: border-box;
+  
+  @include respond-to(sm) {
+    border-radius: $radius-lg;
+    padding: 0.625rem $spacing-md;
+    font-size: 0.875rem;
+  }
+  
+  @include respond-to(md) {
+    border-radius: $radius-xl;
+  }
+  
+  &::placeholder {
+    color: $slate-500;
+  }
+  
+  @include focus-ring;
+}
+
+.formTextarea {
+  resize: vertical;
+}
+
+.formError {
+  font-size: 0.625rem;
+  color: $red-400;
+  background-color: rgba($red-950, 0.4);
+  border: 1px solid rgba($red-900, 0.6);
+  border-radius: $radius-lg;
+  padding: $spacing-sm $spacing-md;
+  
+  @include respond-to(sm) {
+    font-size: 0.75rem;
+  }
+}
+
+// Buttons
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: $radius-md;
+  padding: 0.75rem $spacing-md;
+  font-size: 0.875rem;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  min-height: 2.75rem;
+  box-sizing: border-box;
+  white-space: nowrap;
+  @include transition;
+  
+  @include respond-to(sm) {
+    border-radius: $radius-lg;
+    padding: 0.625rem $spacing-md;
+    font-size: 0.875rem;
+    min-height: 2.5rem;
+  }
+  
+  @include respond-to(md) {
+    border-radius: $radius-xl;
+  }
+  
+  &.btnPrimary {
+    background-color: $sky-500;
+    color: $slate-950;
+    border: 1px solid $sky-400;
+    
+    &:hover {
+      background-color: $sky-400;
+    }
+    
+    &:active {
+      background-color: rgba($sky-500, 0.9);
+    }
+    
+    @include focus-ring;
+  }
+  
+  &.btnFull {
+    width: 100%;
+    
+    @include respond-to(md) {
+      width: auto;
+    }
+  }
+  
+  &.btnAdd {
+    width: 100%;
+    max-width: 200px;
+    align-self: flex-start;
+    
+    @include respond-to(sm) {
+      max-width: 220px;
+    }
+    
+    @include respond-to(md) {
+      width: auto;
+      max-width: none;
+      align-self: auto;
+    }
+  }
+  
+  &.btnIcon {
+    padding: 0.375rem;
+    border-radius: $radius-md;
+    background-color: rgba($sky-500, 0.2);
+    color: $sky-300;
+    border: 1px solid rgba($sky-500, 0.4);
+    min-width: 2rem;
+    min-height: 2rem;
+    
+    @include respond-to(sm) {
+      padding: 0.5rem;
+      min-width: 2.25rem;
+      min-height: 2.25rem;
+    }
+    
+    svg {
+      width: 0.875rem;
+      height: 0.875rem;
+      
+      @include respond-to(sm) {
+        width: 1rem;
+        height: 1rem;
+      }
+    }
+    
+    &:hover {
+      background-color: rgba($sky-500, 0.3);
+      border-color: rgba($sky-500, 0.6);
+    }
+    
+    @include transition;
+  }
+}
+
+// Utility classes
+.spaceY2 > * + * {
+  margin-top: 0.5rem;
+}
+
+.mt2 {
+  margin-top: 0.5rem;
+}
+
+.flex1 {
+  flex: 1;
+}
+
