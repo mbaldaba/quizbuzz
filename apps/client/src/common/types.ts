@@ -39,3 +39,12 @@ export interface IUser {
 	name: string,
 	team: string,
 }
+
+export interface IPlayerScore {
+	id: string,
+	name: string,
+	score: number,
+	correctAnswers?: number,
+	wrongAnswers?: number,
+	isYou?: boolean,
+};

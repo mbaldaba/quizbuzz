@@ -1,7 +1,11 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+
 import { useStudentRoom } from "../hooks/useStudentRoom";
 
 export default function StudentRoomView() {
+	const navigate = useNavigate();
+
 	const {
 		playerName,
 		roomCode,
@@ -59,6 +63,13 @@ export default function StudentRoomView() {
 							<p className="text-sm font-semibold">{playerName}</p>
 						</div>
 					</div>
+
+					<button
+						onClick={() => navigate("/scoreboard")}
+						className=" ml-auto rounded-xl bg-sky-500 hover:bg-sky-400 active:bg-sky-500 text-slate-950 font-semibold text-xs px-4 py-2 transition border border-sky-300"
+					>
+						← View Leaderboard
+					</button>
 
 					<div className="flex items-center gap-3">
 						{typeof totalQuestions === "number" && (
@@ -185,7 +196,7 @@ export default function StudentRoomView() {
 								onClick={onBuzz}
 								disabled={buzzerDisabled}
 								className={`
-                  rounded-full px-10 py-10 md:px-14 md:py-14 text-xl md:text-2xl font-extrabold uppercase transition
+                  rounded-full px-10 py-10 md:px-14 md:py-14 text-xl md:text-2xl font-extrabold uppercase transition aspect-square
                   ${
 										buzzerDisabled
 											? "bg-slate-700 text-slate-400 cursor-not-allowed border border-slate-600"

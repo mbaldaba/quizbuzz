@@ -66,3 +66,35 @@ export const activeRoomsFromServer = [
 		password: "123",
 	},
 ];
+
+export const sampleRoomPlayers = [
+	{
+		id: "1",
+		name: "Player One",
+		score: 120,
+		correctAnswers: 6,
+		wrongAnswers: 2,
+		isYou: true,
+	},
+	{
+		id: "2",
+		name: "Player Two",
+		score: 110,
+		correctAnswers: 5,
+		wrongAnswers: 3,
+	},
+	{
+		id: "3",
+		name: "Player Three",
+		score: 80,
+		correctAnswers: 4,
+		wrongAnswers: 4,
+	},
+	{
+		id: "4",
+		name: "Player Four",
+		score: 60,
+		correctAnswers: 3,
+		wrongAnswers: 5,
+	},
+];
