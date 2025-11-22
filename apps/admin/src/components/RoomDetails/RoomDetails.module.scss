@@ -1,0 +1,418 @@
+@use '../../styles/variables' as *;
+@use '../../styles/mixins' as *;
+
+// Modal
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  z-index: 50;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: $spacing-sm;
+  overflow-y: auto;
+  
+  @include respond-to(sm) {
+    align-items: center;
+    padding: $spacing-md;
+  }
+  
+  .modalContent {
+    background-color: $slate-900;
+    border: 1px solid $slate-800;
+    border-radius: $radius-xl;
+    padding: $spacing-md;
+    max-width: 42rem;
+    width: 100%;
+    max-height: 95vh;
+    margin-top: $spacing-md;
+    margin-bottom: $spacing-md;
+    overflow-y: auto;
+    overflow-x: hidden;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+    box-sizing: border-box;
+    
+    // Custom scrollbar styling
+    scrollbar-width: thin;
+    scrollbar-color: $sky-600 $slate-900;
+    
+    // Webkit scrollbar (Chrome, Safari, Edge)
+    &::-webkit-scrollbar {
+      width: 10px;
+    }
+    
+    &::-webkit-scrollbar-track {
+      background: $slate-900;
+      border-radius: $radius-full;
+      margin-top: $spacing-lg;
+      margin-bottom: $spacing-lg;
+    }
+    
+    &::-webkit-scrollbar-thumb {
+      background: $sky-600;
+      border-radius: $radius-full;
+      border: 2px solid $slate-900;
+      min-height: 50px;
+      
+      &:hover {
+        background: $sky-500;
+      }
+    }
+    
+    &::-webkit-scrollbar-corner {
+      background: $slate-900;
+    }
+    
+    @include respond-to(sm) {
+      border-radius: $radius-xl;
+      padding: $spacing-lg;
+      max-height: 90vh;
+      margin-top: 0;
+      margin-bottom: 0;
+    }
+    
+    @include respond-to(md) {
+      padding: $spacing-xl;
+    }
+    
+    .modalHeader {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: $spacing-sm;
+      margin-bottom: $spacing-md;
+      
+      @include respond-to(sm) {
+        gap: $spacing-md;
+        margin-bottom: $spacing-lg;
+      }
+      
+      .modalTitle {
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: $slate-50;
+        margin-bottom: $spacing-sm;
+        word-break: break-word;
+        
+        @include respond-to(sm) {
+          font-size: 1.25rem;
+        }
+        
+        @include respond-to(md) {
+          font-size: 1.5rem;
+        }
+      }
+      
+      .modalClose {
+        color: $slate-400;
+        flex-shrink: 0;
+        background: none;
+        border: none;
+        cursor: pointer;
+        padding: $spacing-xs;
+        @include transition;
+        
+        &:hover {
+          color: $slate-200;
+        }
+        
+        svg {
+          width: 1.25rem;
+          height: 1.25rem;
+          
+          @include respond-to(sm) {
+            width: 1.5rem;
+            height: 1.5rem;
+          }
+        }
+      }
+    }
+  }
+}
+
+.roomMeta {
+  font-size: 0.625rem;
+  color: $slate-400;
+  margin-top: 0.25rem;
+  line-height: 1.4;
+  
+  @include respond-to(sm) {
+    font-size: 0.6875rem;
+  }
+  
+  .roomNumber {
+    font-family: monospace;
+    color: $slate-200;
+  }
+}
+
+// Player List
+.playerItem {
+  border-radius: $radius-lg;
+  border: 1px solid $slate-800;
+  background-color: rgba($slate-900, 0.6);
+  padding: 0.625rem $spacing-md;
+  margin-bottom: $spacing-sm;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow-wrap: break-word;
+  
+  @include respond-to(sm) {
+    border-radius: $radius-xl;
+    padding: 0.75rem $spacing-md;
+  }
+  
+  .playerContent {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: $spacing-sm;
+    width: 100%;
+    box-sizing: border-box;
+    
+    .playerInfo {
+      flex: 1;
+      min-width: 0;
+      max-width: 100%;
+      
+      .playerName {
+        font-size: 0.75rem;
+        font-weight: 500;
+        color: $slate-50;
+        word-break: break-word;
+        
+        @include respond-to(sm) {
+          font-size: 0.875rem;
+        }
+      }
+      
+      .playerTeam {
+        font-size: 0.625rem;
+        color: $slate-400;
+        margin-top: 0.125rem;
+        word-break: break-word;
+        
+        @include respond-to(sm) {
+          font-size: 0.75rem;
+        }
+      }
+    }
+    
+    .playerScore {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: $sky-400;
+      flex-shrink: 0;
+      
+      @include respond-to(sm) {
+        font-size: 0.875rem;
+      }
+    }
+  }
+}
+
+.roomListEmpty {
+  font-size: 0.75rem;
+  color: $slate-500;
+  font-style: italic;
+  
+  @include respond-to(sm) {
+    font-size: 0.875rem;
+  }
+}
+
+// Utility classes
+.flex1 {
+  flex: 1;
+}
+
+.minW0 {
+  min-width: 0;
+}
+
+.spaceY4 > * + * {
+  margin-top: 1rem;
+}
+
+.spaceY2 > * + * {
+  margin-top: 0.5rem;
+}
+
+.mb2 {
+  margin-bottom: 0.5rem;
+}
+
+.mt1 {
+  margin-top: 0.25rem;
+}
+
+.sectionTitle {
+  font-size: 1rem;
+  font-weight: 600;
+  color: $slate-50;
+  
+  @include respond-to(sm) {
+    font-size: 1.125rem;
+  }
+  
+  @include respond-to(md) {
+    font-size: 1.25rem;
+  }
+}
+
+// Question Section
+.questionSection {
+  border-radius: $radius-lg;
+  border: 1px solid $slate-800;
+  background-color: rgba($slate-900, 0.6);
+  padding: $spacing-md;
+  
+  @include respond-to(sm) {
+    padding: $spacing-lg;
+    border-radius: $radius-xl;
+  }
+  
+  .questionHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: $spacing-sm;
+    margin-bottom: $spacing-md;
+    
+    .questionType {
+      font-size: 0.625rem;
+      color: $slate-400;
+      background-color: rgba($slate-800, 0.5);
+      padding: 0.25rem $spacing-sm;
+      border-radius: $radius-md;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      
+      @include respond-to(sm) {
+        font-size: 0.6875rem;
+        padding: 0.375rem $spacing-sm;
+      }
+    }
+  }
+  
+  .questionContent {
+    .questionText {
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: $slate-50;
+      line-height: 1.6;
+      margin-bottom: $spacing-md;
+      
+      @include respond-to(sm) {
+        font-size: 1rem;
+      }
+    }
+    
+    .choicesList {
+      display: flex;
+      flex-direction: column;
+      gap: $spacing-sm;
+      margin-bottom: $spacing-md;
+      
+      .choiceItem {
+        display: flex;
+        align-items: flex-start;
+        gap: $spacing-sm;
+        padding: $spacing-sm $spacing-md;
+        border-radius: $radius-md;
+        background-color: rgba($slate-800, 0.3);
+        border: 1px solid $slate-800;
+        
+        .choiceLabel {
+          font-weight: 600;
+          color: $slate-300;
+          flex-shrink: 0;
+          font-size: 0.75rem;
+          
+          @include respond-to(sm) {
+            font-size: 0.875rem;
+          }
+        }
+        
+        .choiceText {
+          color: $slate-200;
+          font-size: 0.75rem;
+          line-height: 1.5;
+          
+          @include respond-to(sm) {
+            font-size: 0.875rem;
+          }
+        }
+      }
+    }
+    
+    .answerSection {
+      margin-top: $spacing-md;
+      padding: $spacing-md;
+      border-radius: $radius-md;
+      background-color: rgba($slate-800, 0.5);
+      border: 1px solid $sky-600;
+      
+      .answerLabel {
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: $sky-300;
+        margin-bottom: $spacing-xs;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        
+        @include respond-to(sm) {
+          font-size: 0.875rem;
+        }
+      }
+      
+      .answerText {
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: $sky-100;
+        line-height: 1.6;
+        
+        @include respond-to(sm) {
+          font-size: 1rem;
+        }
+      }
+    }
+    
+    .nextButton {
+      width: 100%;
+      margin-top: $spacing-md;
+      padding: $spacing-md;
+      background-color: $sky-600;
+      color: $slate-50;
+      border: none;
+      border-radius: $radius-lg;
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      @include transition;
+      
+      @include respond-to(sm) {
+        padding: $spacing-md $spacing-lg;
+        font-size: 1rem;
+      }
+      
+      &:hover:not(:disabled) {
+        background-color: $sky-500;
+      }
+      
+      &:active:not(:disabled) {
+        background-color: $slate-800;
+      }
+      
+      &:disabled {
+        background-color: $slate-700;
+        color: $slate-400;
+        cursor: not-allowed;
+      }
+    }
+  }
+}
+

@@ -1,0 +1,209 @@
+@use 'variables' as *;
+@use 'mixins' as *;
+
+.admin-container {
+  min-height: 100vh;
+  width: 100%;
+  max-width: 100vw;
+  background-color: $slate-950;
+  overflow-x: hidden;
+  
+  .admin-content {
+    width: 100%;
+    max-width: 100%;
+    padding: $spacing-sm;
+    box-sizing: border-box;
+    
+    @include respond-to(sm) {
+      padding: $spacing-md;
+    }
+    
+    @include respond-to(md) {
+      padding: $spacing-lg $spacing-md;
+    }
+    
+    @include respond-to(lg) {
+      padding: $spacing-xl $spacing-lg;
+    }
+    
+    @include respond-to(xl) {
+      padding: $spacing-xl $spacing-2xl;
+    }
+  }
+  
+  .admin-header {
+    margin-bottom: $spacing-md;
+    
+    @include respond-to(sm) {
+      margin-bottom: $spacing-lg;
+    }
+    
+    @include respond-to(md) {
+      margin-bottom: $spacing-xl;
+    }
+    
+    .admin-label {
+      font-size: 0.625rem;
+      text-transform: uppercase;
+      letter-spacing: 0.2em;
+      color: rgba($sky-400, 0.8);
+      margin-bottom: $spacing-sm;
+      
+      @include respond-to(sm) {
+        font-size: 0.75rem;
+      }
+    }
+    
+    .admin-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: $slate-50;
+      line-height: 1.2;
+      
+      @include respond-to(sm) {
+        font-size: 1.5rem;
+      }
+      
+      @include respond-to(md) {
+        font-size: 1.875rem;
+      }
+      
+      @include respond-to(lg) {
+        font-size: 2.25rem;
+      }
+    }
+    
+    .admin-subtitle {
+      margin-top: $spacing-sm;
+      font-size: 0.75rem;
+      color: $slate-400;
+      
+      @include respond-to(sm) {
+        font-size: 0.875rem;
+      }
+    }
+  }
+  
+  .admin-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: $spacing-sm;
+    margin-bottom: $spacing-md;
+    width: 100%;
+    box-sizing: border-box;
+    
+    @include respond-to(sm) {
+      gap: $spacing-md;
+      margin-bottom: $spacing-lg;
+    }
+    
+    @include respond-to(md) {
+      grid-template-columns: 1fr 1.2fr;
+      gap: $spacing-xl;
+      margin-bottom: $spacing-xl;
+    }
+  }
+  
+  .admin-section {
+    background-color: rgba($slate-900, 0.8);
+    border: 1px solid $slate-800;
+    border-radius: $radius-lg;
+    padding: $spacing-sm;
+    box-shadow: 0 20px 25px -5px rgba($slate-950, 0.5);
+    width: 100%;
+    box-sizing: border-box;
+    overflow-wrap: break-word;
+    
+    @include respond-to(sm) {
+      border-radius: $radius-xl;
+      padding: $spacing-md;
+    }
+    
+    @include respond-to(md) {
+      padding: $spacing-lg;
+    }
+    
+    @include respond-to(lg) {
+      padding: $spacing-xl;
+    }
+    
+    &.section-secondary {
+      background-color: transparent;
+      border: 1px solid $slate-800;
+      box-shadow: none;
+      display: flex;
+      flex-direction: column;
+      max-height: none;
+      min-height: 300px;
+      
+      @include respond-to(sm) {
+        max-height: 500px;
+      }
+      
+      @include respond-to(md) {
+        max-height: 600px;
+      }
+    }
+    
+    .section-header {
+      display: flex;
+      flex-direction: column;
+      gap: $spacing-sm;
+      margin-bottom: $spacing-md;
+      
+      @include respond-to(md) {
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        gap: $spacing-md;
+      }
+      
+      .section-title {
+        font-size: 1rem;
+        font-weight: 600;
+        color: $slate-50;
+        
+        @include respond-to(sm) {
+          font-size: 1.125rem;
+        }
+        
+        @include respond-to(md) {
+          font-size: 1.25rem;
+        }
+      }
+      
+      .section-subtitle {
+        font-size: 0.6875rem;
+        color: $slate-400;
+        margin-top: $spacing-xs;
+        
+        @include respond-to(sm) {
+          font-size: 0.75rem;
+        }
+      }
+      
+      .section-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: $radius-full;
+        background-color: $slate-900;
+        border: 1px solid $slate-700;
+        padding: $spacing-xs 0.625rem;
+        font-size: 0.625rem;
+        color: $slate-300;
+        align-self: flex-start;
+        
+        @include respond-to(sm) {
+          padding: $spacing-xs 0.75rem;
+          font-size: 0.6875rem;
+        }
+        
+        @include respond-to(md) {
+          align-self: auto;
+        }
+      }
+    }
+  }
+}
+
