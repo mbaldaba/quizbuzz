@@ -1,10 +1,10 @@
 # Quiz Buzz
 
-A full-stack quiz application built with React, Node.js, and PostgreSQL. This monorepo contains three main applications:
+A full-stack quiz application built with React, NestJS, and PostgreSQL. This monorepo contains three main applications:
 
 - **Admin** - Question management dashboard for creating and managing quiz questions
 - **Client** - Web application for players to take quizzes
-- **API** - Central backend server that handles data and business logic
+- **API** - Central backend server built with NestJS that handles data and business logic
 
 ## Architecture
 
@@ -13,8 +13,11 @@ QuizBuzz/
 ├── apps/
 │   ├── admin/          # Admin dashboard (React + Vite) - Port 3000
 │   ├── client/         # Player interface (React + Vite) - Port 4000  
-│   └── api/            # Backend API (Node.js + Express) - Port 5000
+│   └── api/            # Backend API (NestJS + Prisma) - Port 5000
 ├── packages/           # Shared configurations and utilities
+│   ├── api-client/     # Shared API client library
+│   ├── eslint-config/  # Shared ESLint configurations
+│   └── typescript-config/ # Shared TypeScript configurations
 └── docker-compose.yml  # PostgreSQL database - Port 5432
 ```
 
@@ -72,12 +75,48 @@ npm install
 
 This will install dependencies for:
 - Root workspace (Turbo, Prettier, TypeScript)
-- Admin app (React, Vite, TypeScript)
-- Client app (React, Vite, TypeScript)
-- API app (Express, TypeScript, tsx)
-- Shared packages (ESLint configs, TypeScript configs)
+- Admin app (React, Vite, TypeScript, SCSS)
+- Client app (React, Vite, TypeScript, Tailwind CSS)
+- API app (NestJS, Prisma, TypeScript)
+- Shared packages (ESLint configs, TypeScript configs, API client)
 
-### 3. Start the Database
+### 3. Configure Environment Variables
+
+Create a `.env` file in the root directory by copying from the example:
+
+```bash
+cp .env.example .env
+```
+
+**Important:** Review and update the `.env` file if needed. Default values:
+
+```dotenv
+# Database
+DATABASE_URL="postgresql://postgres:postgres@localhost:5432/quizbuzz?schema=public"
+
+# Application
+PORT=5000
+NODE_ENV=development
+
+# Auth
+AUTH_SECRET="your-secret-key-change-this-in-production"  # Change this in production!
+SESSION_EXPIRY_DAYS=7
+```
+
+**Environment Variables Explained:**
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `DATABASE_URL` | PostgreSQL connection string | `postgresql://postgres:postgres@localhost:5432/quizbuzz?schema=public` |
+| `PORT` | API server port | `5000` |
+| `NODE_ENV` | Environment mode | `development` |
+| `AUTH_SECRET` | Secret key for JWT token signing | `your-secret-key-change-this-in-production` |
+| `SESSION_EXPIRY_DAYS` | JWT token expiration in days | `7` |
+
+> ⚠️ **Security Note:** Make sure to change `AUTH_SECRET` to a strong random string in production environments.
+
+### 4. Start the Database
+
 ```bash
 # Start PostgreSQL database in the background
 docker compose up -d
@@ -86,7 +125,7 @@ docker compose up -d
 **Database Details:**
 - **Host:** localhost
 - **Port:** 5432
-- **Database:** postgres
+- **Database:** quizbuzz
 - **Username:** postgres
 - **Password:** postgres
 
@@ -96,7 +135,40 @@ docker compose ps
 # Should show postgres container running on port 5432
 ```
 
-### 4. Start Development Servers
+### 5. Set Up Database Schema
+
+Run Prisma migrations to create the database tables:
+
+```bash
+npm run prisma:migrate
+```
+
+This command will:
+- Create all necessary database tables
+- Set up relationships and constraints
+- Update the Prisma Client
+
+**Expected Output:**
+```
+Your database is now in sync with your schema.
+✔ Generated Prisma Client
+```
+
+### 6. Seed the Database (Optional but Recommended)
+
+Populate the database with initial data including an admin user and sample questions:
+
+```bash
+npm run prisma:seed
+```
+
+**Default Admin Credentials:**
+- **Username:** `admin`
+- **Password:** `password`
+
+> 📝 **Note:** This creates an admin user and sample quiz questions for development/testing.
+
+### 7. Start Development Servers
 
 ```bash
 npm run dev
@@ -129,6 +201,30 @@ npm run format       # Format code with Prettier
 npm run check-types  # Type-check all TypeScript code
 ```
 
+### Database & Prisma Commands
+
+```bash
+# Generate Prisma Client (after schema changes)
+npm run prisma:generate
+
+# Create and apply new migration
+npm run prisma:migrate
+
+# Seed database with initial data
+npm run prisma:seed
+
+# Reset database (⚠️ DANGER: Deletes all data!)
+npm run prisma:reset
+```
+
+> ⚠️ **Warning:** `npm run prisma:reset` will:
+> - Drop the database
+> - Recreate it
+> - Run all migrations
+> - Run seed scripts
+> 
+> **Only use this on development databases - NEVER on production!**
+
 ## Database Management
 
 ### Stop Database
@@ -136,10 +232,24 @@ npm run check-types  # Type-check all TypeScript code
 docker compose down
 ```
 
-### Reset Database (Delete all data)
+### Restart Database
+```bash
+docker compose restart
+```
+
+### Reset Database & Docker Volume (Complete Clean Slate)
 ```bash
 docker compose down -v  # -v removes volumes
 docker compose up -d
+
+# Run migrations and seed
+npm run prisma:migrate
+npm run prisma:seed
+```
+
+### View Database Logs
+```bash
+docker compose logs -f postgres
 ```
 
 ## Project Structure Details
@@ -154,7 +264,7 @@ This project uses:
 - **Frontend:** React 19, TypeScript, Vite
 - **Backend:** Node.js, Express, TypeScript
 - **Database:** PostgreSQL 17
-- **Development:** Turbo, ESLint, Prettier
+- **Development:** Turbo (monorepo), ESLint, Prettier
 - **Containerization:** Docker & Docker Compose
 
 ## Troubleshooting
