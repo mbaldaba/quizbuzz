@@ -1,0 +1,174 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserType {
+  ADMIN     @map("admin")
+  TEMPORARY @map("temporary")
+
+  @@map("user_type")
+}
+
+enum QuestionType {
+  MULTIPLE_CHOICE @map("multiple_choice")
+  TRUE_OR_FALSE   @map("true_or_false")
+  IDENTIFICATION  @map("identification")
+
+  @@map("question_type")
+}
+
+enum RoomStatus {
+  CREATED @map("created")
+  ONGOING @map("ongoing")
+  ENDED   @map("ended")
+
+  @@map("room_status")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  username  String   @unique
+  password  String
+  type      UserType
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  sessions           Session[]
+  createdRooms       Room[]            @relation("RoomCreatedBy")
+  updatedRooms       Room[]            @relation("RoomUpdatedBy")
+  createdQuestions   Question[]        @relation("QuestionCreatedBy")
+  updatedQuestions   Question[]        @relation("QuestionUpdatedBy")
+  createdChoices     QuestionChoice[]  @relation("QuestionChoiceCreatedBy")
+  updatedChoices     QuestionChoice[]  @relation("QuestionChoiceUpdatedBy")
+  roomParticipations RoomParticipant[]
+
+  @@map("users")
+}
+
+model Room {
+  id          String     @id @default(cuid())
+  title       String
+  maxPlayers  Int        @map("max_players")
+  password    String?
+  status      RoomStatus @default(CREATED)
+  startedAt   DateTime?  @map("started_at")
+  endedAt     DateTime?  @map("ended_at")
+  createdById String     @map("created_by_id")
+  updatedById String     @map("updated_by_id")
+  createdAt   DateTime   @default(now()) @map("created_at")
+  updatedAt   DateTime   @updatedAt @map("updated_at")
+
+  roomQuestions RoomQuestion[]
+  participants  RoomParticipant[]
+  createdBy     User              @relation("RoomCreatedBy", fields: [createdById], references: [id])
+  updatedBy     User              @relation("RoomUpdatedBy", fields: [updatedById], references: [id])
+
+  @@map("rooms")
+}
+
+model Question {
+  id              String       @id @default(cuid())
+  type            QuestionType
+  description     String
+  correctAnswerId String?      @map("correct_answer_id")
+  createdById     String       @map("created_by_id")
+  updatedById     String       @map("updated_by_id")
+  createdAt       DateTime     @default(now()) @map("created_at")
+  updatedAt       DateTime     @updatedAt @map("updated_at")
+
+  roomQuestions     RoomQuestion[]
+  choices           QuestionChoice[]       @relation("QuestionChoices")
+  correctAnswer     QuestionChoice?        @relation("CorrectAnswer", fields: [correctAnswerId], references: [id])
+  createdBy         User                   @relation("QuestionCreatedBy", fields: [createdById], references: [id])
+  updatedBy         User                   @relation("QuestionUpdatedBy", fields: [updatedById], references: [id])
+  participantEvents RoomParticipantEvent[]
+
+  @@map("questions")
+}
+
+model QuestionChoice {
+  id          String   @id @default(cuid())
+  value       String
+  questionId  String   @map("question_id")
+  createdById String   @map("created_by_id")
+  updatedById String   @map("updated_by_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  question           Question               @relation("QuestionChoices", fields: [questionId], references: [id], onDelete: Cascade)
+  correctForQuestion Question[]             @relation("CorrectAnswer")
+  selectedInEvents   RoomParticipantEvent[]
+  createdBy          User                   @relation("QuestionChoiceCreatedBy", fields: [createdById], references: [id])
+  updatedBy          User                   @relation("QuestionChoiceUpdatedBy", fields: [updatedById], references: [id])
+
+  @@map("question_choices")
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model RoomParticipant {
+  id     String @id @default(cuid())
+  roomId String @map("room_id")
+  userId String @map("user_id")
+
+  nickname  String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  room   Room                   @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  user   User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  events RoomParticipantEvent[]
+
+  @@unique([roomId, userId])
+  @@unique([roomId, nickname])
+  @@map("room_participants")
+}
+
+model RoomQuestion {
+  id         String   @id @default(cuid())
+  roomId     String   @map("room_id")
+  questionId String   @map("question_id")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  room     Room     @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  question Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@unique([roomId, questionId])
+  @@map("room_questions")
+}
+
+model RoomParticipantEvent {
+  id                String   @id @default(cuid())
+  roomParticipantId String   @map("room_participant_id")
+  questionId        String   @map("question_id")
+  selectedChoiceId  String?  @map("selected_choice_id")
+  value             Int      @default(0)
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  roomParticipant RoomParticipant @relation(fields: [roomParticipantId], references: [id], onDelete: Cascade)
+  question        Question        @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  selectedChoice  QuestionChoice? @relation(fields: [selectedChoiceId], references: [id])
+
+  @@unique([roomParticipantId, questionId])
+  @@map("room_participant_events")
+}
