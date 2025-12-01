@@ -2,17 +2,26 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  Inject,
+  forwardRef,
 } from '@nestjs/common';
 import { RoomStatus, Room } from '@prisma/client';
 import * as argon2 from 'argon2';
 import { PrismaService } from '../../prisma/prisma.service';
+import { EventsService } from '../events/events.service';
+import { EventsGateway } from '../events/events.gateway';
 import { CreateRoomDto } from './dto/create-room.dto';
 import { RoomResponseDto } from './dto/room-response.dto';
 import { PaginatedResponseDto } from '../../common/dto/paginated-response.dto';
 
 @Injectable()
 export class RoomsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly eventsService: EventsService,
+    @Inject(forwardRef(() => EventsGateway))
+    private readonly eventsGateway: EventsGateway,
+  ) {}
 
   async createRoom(
     createRoomDto: CreateRoomDto,
@@ -101,6 +110,10 @@ export class RoomsService {
       },
     });
 
+    // Broadcast QUIZ_STARTED event
+    const quizStartedPayload = await this.eventsService.getQuizStartedPayload(roomId);
+    this.eventsGateway.broadcastQuizStarted(roomId, quizStartedPayload);
+
     return this.toRoomResponse(updatedRoom);
   }
 
@@ -130,6 +143,10 @@ export class RoomsService {
         updatedById: userId,
       },
     });
+
+    // Broadcast QUIZ_ENDED event
+    const quizEndedPayload = await this.eventsService.getQuizEndedPayload(roomId);
+    this.eventsGateway.broadcastQuizEnded(roomId, quizEndedPayload);
 
     return this.toRoomResponse(updatedRoom);
   }

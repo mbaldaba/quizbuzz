@@ -14,8 +14,8 @@ import {
 import { QuizmasterService } from './quizmaster.service';
 import { NextQuestionDto } from './dto/next-question.dto';
 import { NextQuestionResponseDto } from './dto/next-question-response.dto';
-import { EvaluateAnswerDto } from './dto/evaluate-answer.dto';
-import { EvaluateResponseDto } from './dto/evaluate-response.dto';
+import { RevealAnswerDto } from './dto/reveal-answer.dto';
+import { RevealAnswerResponseDto } from './dto/reveal-answer-response.dto';
 import { AdminOnly } from '../../common/decorators/admin-only.decorator';
 
 @ApiTags('quizmaster')
@@ -49,32 +49,32 @@ export class QuizmasterController {
     return this.quizmasterService.nextQuestion(nextQuestionDto);
   }
 
-  @Post('evaluate')
+  @Post('reveal-answer')
   @AdminOnly()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ 
-    summary: 'Evaluate a participant\'s answer and assign points',
-    description: 'Evaluates if the participant\'s answer is correct and assigns 1 point if correct, 0 if incorrect. Creates or updates the participant event.'
+    summary: 'Reveal the answer and calculate scores',
+    description: 'Reveals the correct answer, evaluates all submissions, and awards 1 point to the first correct answer. Broadcasts results via Socket.IO.'
   })
-  @ApiBody({ type: EvaluateAnswerDto })
+  @ApiBody({ type: RevealAnswerDto })
   @ApiResponse({
     status: 200,
-    description: 'Answer successfully evaluated',
-    type: EvaluateResponseDto,
+    description: 'Answer revealed and scores updated',
+    type: RevealAnswerResponseDto,
   })
   @ApiResponse({ 
     status: 400, 
-    description: 'Bad request - Invalid answer or participant not in room' 
+    description: 'Bad request - Question not active in room' 
   })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden - Admin access required' })
   @ApiResponse({ 
     status: 404, 
-    description: 'Room, question, or participant not found' 
+    description: 'Room or question not found' 
   })
-  async evaluateAnswer(
-    @Body() evaluateAnswerDto: EvaluateAnswerDto,
-  ): Promise<EvaluateResponseDto> {
-    return this.quizmasterService.evaluateAnswer(evaluateAnswerDto);
+  async revealAnswer(
+    @Body() revealAnswerDto: RevealAnswerDto,
+  ): Promise<RevealAnswerResponseDto> {
+    return this.quizmasterService.revealAnswer(revealAnswerDto);
   }
 }
