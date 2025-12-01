@@ -22,5 +22,8 @@
     "@repo/typescript-config": "*",
     "eslint": "^9.39.1",
     "typescript": "~5.9.3"
+  },
+  "dependencies": {
+    "socket.io-client": "^4.8.1"
   }
 }
