@@ -8,6 +8,7 @@ import { QuestionsModule } from './features/questions/questions.module';
 import { RoomsModule } from './features/rooms/rooms.module';
 import { ParticipantsModule } from './features/participants/participants.module';
 import { QuizmasterModule } from './features/quizmaster/quizmaster.module';
+import { EventsModule } from './features/events/events.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { QuizmasterModule } from './features/quizmaster/quizmaster.module';
     RoomsModule,
     ParticipantsModule,
     QuizmasterModule,
+    EventsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

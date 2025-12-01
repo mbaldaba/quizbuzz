@@ -2,16 +2,15 @@ import {
   Controller,
   Post,
   Body,
-  Res,
   Req,
   HttpCode,
   HttpStatus,
   UnauthorizedException,
 } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
+import { JwtService } from '@nestjs/jwt';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
-import type { Request, Response } from 'express';
-import { ParticipantsService } from './participants.service';
+import type { Request } from 'express';
+import { ParticipantsService, JoinRoomResult } from './participants.service';
 import { JoinRoomDto } from './dto/join-room.dto';
 import { ParticipantResponseDto } from './dto/participant-response.dto';
 
@@ -20,7 +19,7 @@ import { ParticipantResponseDto } from './dto/participant-response.dto';
 export class ParticipantsController {
   constructor(
     private readonly participantsService: ParticipantsService,
-    private readonly config: ConfigService,
+    private readonly jwtService: JwtService,
   ) {}
 
   @Post('join')
@@ -36,29 +35,28 @@ export class ParticipantsController {
   @ApiResponse({ status: 401, description: 'Invalid room password' })
   async joinRoom(
     @Body() joinRoomDto: JoinRoomDto,
-    @Res({ passthrough: true }) res: Response,
   ): Promise<ParticipantResponseDto> {
-    const participant = await this.participantsService.joinRoom(
+    const result: JoinRoomResult = await this.participantsService.joinRoom(
       joinRoomDto.roomId,
       joinRoomDto.nickname,
       joinRoomDto.password,
     );
 
-    // Calculate cookie max age (7 days by default)
-    const expiryDays = this.config.get<number>('SESSION_EXPIRY_DAYS') ?? 7;
-    const maxAge = expiryDays * 24 * 60 * 60 * 1000; // Convert to milliseconds
-
-    // Set signed cookie
-    res.cookie('sessionId', participant.sessionId, {
-      httpOnly: true,
-      secure: this.config.get('NODE_ENV') === 'production',
-      sameSite: 'lax',
-      maxAge,
-      path: '/',
-      signed: true,
+    // Generate JWT token
+    const token = this.jwtService.sign({
+      sessionId: result.sessionId,
+      roomId: result.roomId,
     });
 
-    return participant;
+    // Return participant data with token, excluding sessionId
+    return {
+      id: result.id,
+      roomId: result.roomId,
+      userId: result.userId,
+      nickname: result.nickname,
+      token,
+      expiresAt: result.expiresAt,
+    };
   }
 
   @Post('leave')
@@ -68,7 +66,6 @@ export class ParticipantsController {
   @ApiResponse({ status: 401, description: 'No session found' })
   async leaveRoom(
     @Req() req: Request,
-    @Res({ passthrough: true }) res: Response,
   ): Promise<{ message: string }> {
     const sessionId = req.signedCookies?.sessionId;
 
@@ -77,15 +74,6 @@ export class ParticipantsController {
     }
 
     await this.participantsService.leaveRoom(sessionId);
-
-    // Clear cookie
-    res.clearCookie('sessionId', {
-      httpOnly: true,
-      secure: this.config.get('NODE_ENV') === 'production',
-      sameSite: 'lax',
-      path: '/',
-      signed: true,
-    });
 
     return { message: 'Successfully left the room' };
   }
