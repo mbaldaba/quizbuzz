@@ -26,10 +26,10 @@ export class ParticipantResponseDto {
   nickname: string;
 
   @ApiProperty({
-    description: 'Session ID',
-    example: 'clxxxxxxxxxxxx',
+    description: 'JWT token for authentication',
+    example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
   })
-  sessionId: string;
+  token: string;
 
   @ApiProperty({
     description: 'Session expiration timestamp',

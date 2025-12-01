@@ -8,7 +8,16 @@ import { ConfigService } from '@nestjs/config';
 import { UserType } from '@prisma/client';
 import * as argon2 from 'argon2';
 import { PrismaService } from '../../prisma/prisma.service';
-import { ParticipantResponseDto } from './dto/participant-response.dto';
+
+// Internal type that includes sessionId for controller use
+export interface JoinRoomResult {
+  id: string;
+  roomId: string;
+  userId: string;
+  nickname: string;
+  sessionId: string;
+  expiresAt: Date;
+}
 
 @Injectable()
 export class ParticipantsService {
@@ -21,7 +30,7 @@ export class ParticipantsService {
     roomId: string,
     nickname: string,
     password: string,
-  ): Promise<ParticipantResponseDto> {
+  ): Promise<JoinRoomResult> {
     // Find the room
     const room = await this.prisma.room.findUnique({
       where: { id: roomId },
