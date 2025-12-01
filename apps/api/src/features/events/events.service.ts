@@ -8,7 +8,7 @@ import {
   QuizEndedPayload,
   ParticipantScore,
   QuestionType,
-} from '@repo/api-client';
+} from '@repo/contracts';
 import { QuestionType as PrismaQuestionType } from '@prisma/client';
 
 interface ClientMapping {

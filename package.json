@@ -7,6 +7,7 @@
     "lint": "turbo run lint",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "check-types": "turbo run check-types",
+    "api:codegen": "cd packages/api-client && npm run codegen",
     "prisma:generate": "cd apps/api && dotenvx run -f ../../.env -- prisma generate",
     "prisma:migrate": "cd apps/api && dotenvx run -f ../../.env -- prisma migrate dev",
     "prisma:reset": "cd apps/api && dotenvx run -f ../../.env -- prisma migrate reset",
