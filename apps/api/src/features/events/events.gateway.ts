@@ -27,7 +27,7 @@ import {
   ScoresUpdatePayload,
   QuizStartedPayload,
   QuizEndedPayload,
-} from '@repo/api-client';
+} from '@repo/contracts';
 import { EventsService } from './events.service';
 
 @WebSocketGateway({

@@ -1,0 +1,1 @@
+{"root":["./eslint.config.js","./vite.config.ts","./src/main.tsx","./src/app/index.tsx","./src/common/helpers.tsx","./src/common/types.ts","./src/components/ProtectedClientPage.tsx","./src/components/RoomScoreboardView.tsx","./src/components/StudentJoinView.tsx","./src/components/StudentRoomView.tsx","./src/data/staticData.ts","./src/hooks/useStudentRoom.ts"],"version":"5.9.3"}
