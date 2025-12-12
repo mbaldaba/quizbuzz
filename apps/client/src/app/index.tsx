@@ -1,8 +1,9 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 
+import ParticipantRoute from "@/features/participants/ParticipantRoute";
+import ScoreboardView from "@/features/participants/ScoreboardView";
 import StudentJoinView from "@/features/participants/StudentJoinView";
 import StudentRoomView from "@/features/participants/StudentRoomView";
-import ParticipantRoute from "@/features/participants/ParticipantRoute";
 
 function App() {
 	return (
@@ -16,6 +17,10 @@ function App() {
 				<Route
 					path="/room/:roomId"
 					element={<StudentRoomView />}
+				/>
+				<Route
+					path="/room/:roomId/leaderboard"
+					element={<ScoreboardView />}
 				/>
 			</Route>
 
