@@ -1,11 +1,11 @@
-export function setToken(token: string): void {
-	window.localStorage.setItem("auth-token", token);
+export function getParticipantToken(): string | null {
+	return window.localStorage.getItem("qb_participant_token");
 }
 
-export function removeToken(): void {
-	window.localStorage.removeItem("auth-token");
+export function setParticipantToken(token: string): void {
+	window.localStorage.setItem("qb_participant_token", token);
 }
 
-export function getToken(): string | null {
-	return window.localStorage.getItem("auth-token");
+export function removeParticipantToken(): void {
+	window.localStorage.removeItem("qb_participant_token");
 }
