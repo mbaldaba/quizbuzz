@@ -451,6 +451,15 @@ export interface ApiRoom {
 	createdById: string;
 	createdAt: string;
 	updatedAt: string;
+	questions?: Array<{
+		id: string;
+		type: "MULTIPLE_CHOICE" | "TRUE_OR_FALSE" | "IDENTIFICATION";
+		description: string;
+		choices: Array<{
+			id: string;
+			value: string;
+		}>;
+	}>;
 }
 
 export interface PaginatedRoomsResponse {
@@ -489,6 +498,23 @@ export async function getRooms(params?: {
 	if (!response.ok) {
 		const error = await response.json().catch(() => ({ message: "Failed to fetch rooms" }));
 		throw new Error(error.message || "Failed to fetch rooms");
+	}
+
+	return response.json();
+}
+
+export async function getRoomById(roomId: string): Promise<ApiRoom> {
+	const response = await fetch(`${API_BASE_URL}/api/rooms/${roomId}`, {
+		method: "GET",
+		headers: {
+			"Content-Type": "application/json",
+		},
+		credentials: "include",
+	});
+
+	if (!response.ok) {
+		const error = await response.json().catch(() => ({ message: "Failed to fetch room" }));
+		throw new Error(error.message || "Failed to fetch room");
 	}
 
 	return response.json();
@@ -724,6 +750,28 @@ export function mapRoomFromApi(apiRoom: ApiRoom, hostName: string = "You"): IAct
 		requiresPassword: apiRoom.hasPassword,
 		password: null, // Password is not returned from API for security
 		createdAt: apiRoom.createdAt,
+		questions: apiRoom.questions?.map(q => {
+			// Convert API question format to frontend format
+			const apiQuestion: ApiQuestion = {
+				id: q.id,
+				type: q.type === "MULTIPLE_CHOICE" 
+					? ApiQuestionType.MULTIPLE_CHOICE 
+					: q.type === "TRUE_OR_FALSE"
+					? ApiQuestionType.TRUE_OR_FALSE
+					: ApiQuestionType.IDENTIFICATION,
+				description: q.description,
+				choices: q.choices.map(c => ({
+					id: c.id,
+					value: c.value,
+					isCorrect: false, // Not included in room response for security
+				})),
+				createdAt: new Date().toISOString(),
+				updatedAt: new Date().toISOString(),
+				createdBy: { id: "", username: "" },
+				updatedBy: { id: "", username: "" },
+			};
+			return mapQuestionFromApi(apiQuestion);
+		}),
 	};
 }
 

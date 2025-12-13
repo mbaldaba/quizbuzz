@@ -1,36 +1,82 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import toast from "react-hot-toast";
 import { IActiveRoom, IPlayer, IQuestionData, QuestionType } from "../../common/types";
+import { useNextQuestion, useRevealAnswer } from "../../hooks/useQuizmaster";
+import { useRoomById } from "../../hooks/useRooms";
+import { useQueryClient } from "@tanstack/react-query";
+import { roomKeys } from "../../hooks/useRooms";
 import styles from "./RoomDetails.module.scss";
 
 type RoomDetailsProps = {
 	room: IActiveRoom;
 	players: IPlayer[];
-	questions: IQuestionData[];
 	onClose: () => void;
 };
 
 export default function RoomDetails({
 	room,
 	players,
-	questions,
 	onClose,
 }: RoomDetailsProps) {
-	const [currentQuestionIndex, setCurrentQuestionIndex] = useState<number>(0);
 	const [showAnswer, setShowAnswer] = useState<boolean>(false);
+	const queryClient = useQueryClient();
+	
+	// Fetch room with questions data
+	const { data: roomData, refetch: refetchRoom } = useRoomById(room.id);
+	
+	// Get current question (last entry in questions array)
+	const currentQuestion = roomData?.questions && roomData.questions.length > 0 
+		? roomData.questions[roomData.questions.length - 1]
+		: null;
+	
+	// Mutations for quizmaster actions
+	const nextQuestionMutation = useNextQuestion();
+	const revealAnswerMutation = useRevealAnswer();
+	
+	// Reset showAnswer when question changes
+	useEffect(() => {
+		setShowAnswer(false);
+	}, [currentQuestion?.id]);
 
-	const currentQuestion = questions[currentQuestionIndex];
-	const isLastQuestion = currentQuestionIndex === questions.length - 1;
-
-	const handleNext = () => {
+	const handleNext = async () => {
+		// If no current question, fetch the next question
+		if (!currentQuestion) {
+			try {
+				await nextQuestionMutation.mutateAsync(room.id);
+				// Refetch the room to get the updated questions array
+				await refetchRoom();
+				// Also invalidate rooms list to refresh room data
+				queryClient.invalidateQueries({ queryKey: roomKeys.all });
+			} catch (error) {
+				// Error already handled by the mutation
+				console.error("Failed to get next question:", error);
+			}
+			return;
+		}
+		
+		// If current question exists and answer not shown, reveal answer
 		if (!showAnswer) {
-			// Show answer first
-			setShowAnswer(true);
+			try {
+				await revealAnswerMutation.mutateAsync({
+					roomId: room.id,
+					questionId: currentQuestion.id,
+				});
+				setShowAnswer(true);
+			} catch (error) {
+				// Error already handled by the mutation
+				console.error("Failed to reveal answer:", error);
+			}
 		} else {
-			// Move to next question
-			if (!isLastQuestion) {
-				setCurrentQuestionIndex(currentQuestionIndex + 1);
-				setShowAnswer(false);
+			// If answer is shown, move to next question
+			try {
+				await nextQuestionMutation.mutateAsync(room.id);
+				// Refetch the room to get the updated questions array
+				await refetchRoom();
+				// Also invalidate rooms list to refresh room data
+				queryClient.invalidateQueries({ queryKey: roomKeys.all });
+			} catch (error) {
+				// Error already handled by the mutation
+				console.error("Failed to get next question:", error);
 			}
 		}
 	};
@@ -124,11 +170,11 @@ export default function RoomDetails({
 
 				<div className={styles.spaceY4}>
 					{/* Current Question Section */}
-					{questions.length > 0 && currentQuestion ? (
+					{currentQuestion ? (
 						<div className={styles.questionSection}>
 							<div className={styles.questionHeader}>
 								<h3 className={`${styles.sectionTitle} ${styles.mb2}`}>
-									Current Question ({currentQuestionIndex + 1} / {questions.length})
+									Current Question
 								</h3>
 								<span className={styles.questionType}>
 									{currentQuestion.type}
@@ -163,22 +209,32 @@ export default function RoomDetails({
 									type="button"
 									onClick={handleNext}
 									className={styles.nextButton}
-									disabled={isLastQuestion && showAnswer}
+									disabled={nextQuestionMutation.isPending || revealAnswerMutation.isPending}
 								>
-									{showAnswer 
-										? (isLastQuestion ? "Quiz Complete" : "Next Question")
+									{nextQuestionMutation.isPending || revealAnswerMutation.isPending
+										? "Loading..."
+										: showAnswer 
+										? "Next Question"
 										: "Show Answer"
 									}
 								</button>
 							</div>
 						</div>
-					) : questions.length === 0 ? (
+					) : (
 						<div className={styles.questionSection}>
 							<p className={styles.roomListEmpty}>
-								No questions available for this room.
+								No active question. Click "Next Question" to start.
 							</p>
+							<button
+								type="button"
+								onClick={handleNext}
+								className={styles.nextButton}
+								disabled={nextQuestionMutation.isPending}
+							>
+								{nextQuestionMutation.isPending ? "Loading..." : "Next Question"}
+							</button>
 						</div>
-					) : null}
+					)}
 
 					{/* Players Section */}
 					<div>

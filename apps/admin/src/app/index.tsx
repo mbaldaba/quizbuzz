@@ -333,7 +333,6 @@ export default function AdminDashboard() {
 				<RoomDetails
 					room={selectedRoom}
 					players={players}
-					questions={questions}
 					onClose={() => setSelectedRoom(null)}
 				/>
 			)}
