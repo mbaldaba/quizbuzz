@@ -15,7 +15,8 @@ export default function AccountList() {
 				const response = await getAccounts();
 				setAccounts(response.accounts);
 			} catch (err) {
-				setError(err instanceof Error ? err.message : "Failed to load accounts");
+				const errorMessage = err instanceof Error ? err.message : "Failed to load accounts";
+				setError(errorMessage);
 			} finally {
 				setLoading(false);
 			}

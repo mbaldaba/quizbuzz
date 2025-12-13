@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import toast from "react-hot-toast";
 import { login, getSession, logout, type SessionResponse } from "../common/api";
 
 // Query keys for React Query
@@ -43,6 +44,11 @@ export function useLogin() {
 		onSuccess: () => {
 			// Invalidate and refetch session after successful login
 			queryClient.invalidateQueries({ queryKey: authKeys.session() });
+			toast.success("Login successful");
+		},
+		onError: (error) => {
+			const errorMessage = error instanceof Error ? error.message : "Login failed";
+			toast.error(errorMessage);
 		},
 	});
 }
@@ -66,6 +72,7 @@ export function useLogout() {
 			queryClient.cancelQueries({ queryKey: authKeys.all });
 			// Remove all auth-related queries
 			queryClient.removeQueries({ queryKey: authKeys.all });
+			toast.success("Logged out successfully");
 		},
 		onError: () => {
 			// Even if logout API fails, clear local state
@@ -76,6 +83,7 @@ export function useLogout() {
 			queryClient.cancelQueries({ queryKey: authKeys.all });
 			// Remove all auth-related queries
 			queryClient.removeQueries({ queryKey: authKeys.all });
+			toast.success("Logged out successfully");
 		},
 	});
 }

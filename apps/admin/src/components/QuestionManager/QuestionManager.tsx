@@ -4,9 +4,9 @@ import styles from "./QuestionManager.module.scss";
 
 type QuestionManagerProps = {
 	questions: IQuestionData[];
-	onAddQuestion: (question: Omit<IQuestionData, "id">) => void;
-	onUpdateQuestion: (questionId: string, question: Omit<IQuestionData, "id">) => void;
-	onDeleteQuestion: (questionId: string) => void;
+	onAddQuestion: (question: Omit<IQuestionData, "id">) => Promise<void>;
+	onUpdateQuestion: (questionId: string, question: Omit<IQuestionData, "id">) => Promise<void>;
+	onDeleteQuestion: (questionId: string) => Promise<void>;
 };
 
 export default function QuestionManager({
@@ -29,6 +29,8 @@ export default function QuestionManager({
 	]);
 	const [correctAnswer, setCorrectAnswer] = useState("");
 	const [error, setError] = useState("");
+	const [isSubmitting, setIsSubmitting] = useState(false);
+	const [isDeleting, setIsDeleting] = useState<string | null>(null);
 
 	const resetForm = () => {
 		setQuestionText("");
@@ -61,43 +63,51 @@ export default function QuestionManager({
 		setShowAddForm(true);
 	};
 
-	const handleSubmit = () => {
+	const handleSubmit = async () => {
 		setError("");
+		setIsSubmitting(true);
 
-		if (!questionText.trim()) {
-			setError("Please enter a question.");
-			return;
-		}
-
-		if (questionType === QuestionType.multiple_choice) {
-			if (!choices.every((c) => c.text.trim())) {
-				setError("Please fill in all choices.");
+		try {
+			if (!questionText.trim()) {
+				setError("Please enter a question.");
 				return;
 			}
-			if (!correctAnswer) {
-				setError("Please select the correct answer.");
+
+			if (questionType === QuestionType.multiple_choice) {
+				if (!choices.every((c) => c.text.trim())) {
+					setError("Please fill in all choices.");
+					return;
+				}
+				if (!correctAnswer) {
+					setError("Please select the correct answer.");
+					return;
+				}
+			} else if (!correctAnswer.trim()) {
+				setError("Please enter the correct answer.");
 				return;
 			}
-		} else if (!correctAnswer.trim()) {
-			setError("Please enter the correct answer.");
-			return;
+
+			const questionData = {
+				type: questionType,
+				text: questionText.trim(),
+				choices:
+					questionType === QuestionType.multiple_choice ? choices : undefined,
+				correctAnswer: correctAnswer.trim(),
+			};
+
+			if (editingQuestion) {
+				await onUpdateQuestion(editingQuestion.id, questionData);
+			} else {
+				await onAddQuestion(questionData);
+			}
+
+			resetForm();
+		} catch (error) {
+			// Error is already handled in the parent component
+			console.error("Failed to save question:", error);
+		} finally {
+			setIsSubmitting(false);
 		}
-
-		const questionData = {
-			type: questionType,
-			text: questionText.trim(),
-			choices:
-				questionType === QuestionType.multiple_choice ? choices : undefined,
-			correctAnswer: correctAnswer.trim(),
-		};
-
-		if (editingQuestion) {
-			onUpdateQuestion(editingQuestion.id, questionData);
-		} else {
-			onAddQuestion(questionData);
-		}
-
-		resetForm();
 	};
 
 	return (
@@ -244,9 +254,16 @@ export default function QuestionManager({
 					<button
 						type="button"
 						onClick={handleSubmit}
+						disabled={isSubmitting}
 						className={`${styles.btn} ${styles.btnPrimary} ${styles.btnFull}`}
 					>
-						{editingQuestion ? "Update Question" : "Add Question"}
+						{isSubmitting
+							? editingQuestion
+								? "Updating..."
+								: "Adding..."
+							: editingQuestion
+								? "Update Question"
+								: "Add Question"}
 					</button>
 				</div>
 			)}
@@ -278,7 +295,9 @@ export default function QuestionManager({
 									)}
 									{question.correctAnswer && (
 										<p className={styles.questionAnswer}>
-											Correct: {question.correctAnswer}
+											Correct: {question.type === QuestionType.multiple_choice && question.choices
+												? question.choices.find((c) => c.id === question.correctAnswer)?.text || question.correctAnswer
+												: question.correctAnswer}
 										</p>
 									)}
 								</div>
@@ -306,11 +325,20 @@ export default function QuestionManager({
 									</button>
 									<button
 										type="button"
-										onClick={() => {
+										onClick={async () => {
 											if (window.confirm("Are you sure you want to delete this question?")) {
-												onDeleteQuestion(question.id);
+												setIsDeleting(question.id);
+												try {
+													await onDeleteQuestion(question.id);
+												} catch (error) {
+													// Error is already handled in the parent component
+													console.error("Failed to delete question:", error);
+												} finally {
+													setIsDeleting(null);
+												}
 											}
 										}}
+										disabled={isDeleting === question.id}
 										className={`${styles.btn} ${styles.btnIcon}`}
 										title="Delete question"
 									>

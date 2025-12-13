@@ -1,11 +1,21 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import toast from "react-hot-toast";
 import CreateRoomForm from "../components/CreateRoomForm/CreateRoomForm";
 import RoomList from "../components/RoomList/RoomList";
 import RoomDetails from "../components/RoomDetails/RoomDetails";
 import QuestionManager from "../components/QuestionManager/QuestionManager";
 import { IActiveRoom, IQuestionData, ActiveRoomEnum, IPlayer } from "../common/types";
-import { mockActiveRooms, mockPlayers, mockQuestions } from "../data/staticData";
+import { mockActiveRooms, mockPlayers } from "../data/staticData";
 import { useLogout, useSession } from "../hooks/useAuth";
+import {
+	getQuestions,
+	createQuestion,
+	updateQuestion,
+	deleteQuestion,
+	mapQuestionToApiCreate,
+	mapQuestionToApiUpdate,
+	mapQuestionFromApi,
+} from "../common/api";
 
 function generateRoomNumber(): string {
 	const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
@@ -18,13 +28,38 @@ function generateRoomNumber(): string {
 
 export default function AdminDashboard() {
 	const [rooms, setRooms] = useState<IActiveRoom[]>(mockActiveRooms);
-	const [questions, setQuestions] = useState<IQuestionData[]>(mockQuestions);
+	const [questions, setQuestions] = useState<IQuestionData[]>([]);
 	const [selectedRoom, setSelectedRoom] = useState<IActiveRoom | null>(null);
 	const [editingRoom, setEditingRoom] = useState<IActiveRoom | null>(null);
 	const [players, setPlayers] = useState<IPlayer[]>(mockPlayers);
+	const [questionsLoading, setQuestionsLoading] = useState(true);
+	const [questionsError, setQuestionsError] = useState<string | null>(null);
 	
 	const { data: session } = useSession();
 	const logoutMutation = useLogout();
+
+	// Fetch questions on mount
+	useEffect(() => {
+		const fetchQuestions = async () => {
+			try {
+				setQuestionsLoading(true);
+				setQuestionsError(null);
+				const response = await getQuestions({ perPage: 100 }); // Fetch all questions
+				const mappedQuestions = response.data.map(mapQuestionFromApi);
+				setQuestions(mappedQuestions);
+			} catch (error) {
+				console.error("Failed to fetch questions:", error);
+				const errorMessage = error instanceof Error ? error.message : "Failed to load questions";
+				setQuestionsError(errorMessage);
+			} finally {
+				setQuestionsLoading(false);
+			}
+		};
+
+		if (session) {
+			fetchQuestions();
+		}
+	}, [session]);
 
 	const handleLogout = async () => {
 		try {
@@ -116,27 +151,54 @@ export default function AdminDashboard() {
 		// In real app, fetch players for this room
 	};
 
-	const handleAddQuestion = (question: Omit<IQuestionData, "id">) => {
-		const newQuestion: IQuestionData = {
-			...question,
-			id: `q${Date.now()}`,
-		};
-		setQuestions([...questions, newQuestion]);
+	const handleAddQuestion = async (question: Omit<IQuestionData, "id">) => {
+		try {
+			const apiQuestion = mapQuestionToApiCreate(question);
+			const created = await createQuestion(apiQuestion);
+			const mappedQuestion = mapQuestionFromApi(created);
+			setQuestions((prev) => [mappedQuestion, ...prev]);
+			toast.success("Question created successfully");
+		} catch (error) {
+			console.error("Failed to create question:", error);
+			const errorMessage = error instanceof Error ? error.message : "Failed to create question";
+			toast.error(errorMessage);
+			throw error;
+		}
 	};
 
-	const handleUpdateQuestion = (
+	const handleUpdateQuestion = async (
 		questionId: string,
 		question: Omit<IQuestionData, "id">
 	) => {
-		setQuestions(
-			questions.map((q) =>
-				q.id === questionId ? { ...q, ...question } : q
-			)
-		);
+		try {
+			const apiQuestion = mapQuestionToApiUpdate(question);
+			const updated = await updateQuestion(questionId, apiQuestion);
+			const mappedQuestion = mapQuestionFromApi(updated);
+			setQuestions((prev) =>
+				prev.map((q) =>
+					q.id === questionId ? mappedQuestion : q
+				)
+			);
+			toast.success("Question updated successfully");
+		} catch (error) {
+			console.error("Failed to update question:", error);
+			const errorMessage = error instanceof Error ? error.message : "Failed to update question";
+			toast.error(errorMessage);
+			throw error;
+		}
 	};
 
-	const handleDeleteQuestion = (questionId: string) => {
-		setQuestions(questions.filter((q) => q.id !== questionId));
+	const handleDeleteQuestion = async (questionId: string) => {
+		try {
+			await deleteQuestion(questionId);
+			setQuestions((prev) => prev.filter((q) => q.id !== questionId));
+			toast.success("Question deleted successfully");
+		} catch (error) {
+			console.error("Failed to delete question:", error);
+			const errorMessage = error instanceof Error ? error.message : "Failed to delete question";
+			toast.error(errorMessage);
+			throw error;
+		}
 	};
 
 	return (
@@ -227,12 +289,22 @@ export default function AdminDashboard() {
 				</div>
 
 				{/* Question Manager */}
+				{questionsError && (
+					<div style={{ padding: "1rem", background: "#fee", color: "#c33", borderRadius: "0.5rem", marginBottom: "1rem" }}>
+						Error loading questions: {questionsError}
+					</div>
+				)}
 				<QuestionManager
 					questions={questions}
 					onAddQuestion={handleAddQuestion}
 					onUpdateQuestion={handleUpdateQuestion}
 					onDeleteQuestion={handleDeleteQuestion}
 				/>
+				{questionsLoading && (
+					<div style={{ padding: "1rem", textAlign: "center", color: "#666" }}>
+						Loading questions...
+					</div>
+				)}
 			</div>
 
 			{/* Room Details Modal */}
