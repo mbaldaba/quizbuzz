@@ -66,14 +66,51 @@ export class EventsGateway
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     @MessageBody() payload: any,
   ) {
+    this.logger.debug(`JOIN_ROOM received from client ${client.id}`, { payload });
+    
     const joinPayload = payload as JoinRoomPayload;
+    if (!joinPayload || !joinPayload.roomId || !joinPayload.token) {
+      const error: ErrorPayload = {
+        message: 'Invalid payload: roomId and token are required',
+        code: 'INVALID_PAYLOAD',
+      };
+      this.logger.warn(`Invalid JOIN_ROOM payload from client ${client.id}`, { payload });
+      client.emit(SOCKET_EVENTS.ERROR, error);
+      return;
+    }
+
     try {
       // Validate JWT token
-      const decoded = this.jwtService.verify(joinPayload.token);
+      let decoded: any;
+      try {
+        decoded = this.jwtService.verify(joinPayload.token);
+      } catch (jwtError) {
+        this.logger.error(`JWT verification failed for client ${client.id}`, jwtError);
+        const error: ErrorPayload = {
+          message: 'Invalid or expired token',
+          code: 'INVALID_TOKEN',
+        };
+        client.emit(SOCKET_EVENTS.ERROR, error);
+        return;
+      }
+
       const { sessionId, roomId: tokenRoomId } = decoded;
+
+      if (!sessionId || !tokenRoomId) {
+        this.logger.error(`Token missing required fields: sessionId=${!!sessionId}, roomId=${!!tokenRoomId}`);
+        const error: ErrorPayload = {
+          message: 'Token missing required fields',
+          code: 'INVALID_TOKEN',
+        };
+        client.emit(SOCKET_EVENTS.ERROR, error);
+        return;
+      }
 
       // Verify room ID matches token
       if (tokenRoomId !== joinPayload.roomId) {
+        this.logger.warn(
+          `Room ID mismatch: token has ${tokenRoomId}, payload has ${joinPayload.roomId}`,
+        );
         const error: ErrorPayload = {
           message: 'Token does not match room ID',
           code: 'INVALID_TOKEN',
@@ -81,6 +118,7 @@ export class EventsGateway
         client.emit(SOCKET_EVENTS.ERROR, error);
         return;
       }
+      
       // Get participant details and validate session
       const participant = await this.eventsService.validateAndGetParticipant(
         sessionId,
@@ -88,6 +126,9 @@ export class EventsGateway
       );
 
       if (!participant) {
+        this.logger.warn(
+          `Participant validation failed: sessionId=${sessionId}, roomId=${joinPayload.roomId}`,
+        );
         const error: ErrorPayload = {
           message: 'Invalid session or participant not found',
           code: 'INVALID_SESSION',
@@ -127,10 +168,14 @@ export class EventsGateway
         `Participant ${participant.nickname} joined room ${joinPayload.roomId}`,
       );
     } catch (error) {
-      this.logger.error('Error in JOIN_ROOM:', error);
+      this.logger.error(`Error in JOIN_ROOM for client ${client.id}:`, error);
+      this.logger.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace');
+      
       const errorPayload: ErrorPayload = {
         message: error instanceof UnauthorizedException 
           ? 'Invalid or expired token'
+          : error instanceof Error
+          ? `Failed to join room: ${error.message}`
           : 'Failed to join room',
         code: 'JOIN_ROOM_ERROR',
       };

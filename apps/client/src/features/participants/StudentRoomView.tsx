@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
-import { API_URL } from "@/common/constants";
+import { SOCKET_URL } from "@/common/constants";
 import { getParticipantToken } from "@/common/helpers";
 import {
 	SOCKET_EVENTS,
@@ -64,7 +64,7 @@ export default function StudentRoomView() {
 	useEffect(() => {
 		if (!roomIdSafe || !token) return;
 
-		const s = connectRoomSocket(API_URL);
+		const s = connectRoomSocket(SOCKET_URL);
 
 		const onRoomJoined = (p: RoomJoinedPayload) => {
 			setParticipantId(p.participantId);

@@ -14,6 +14,7 @@ import {
 	emitJoinRoom,
 	emitLeaveRoom,
 } from "@/modules/socket/roomSocket";
+import { SOCKET_URL } from "@/common/constants";
 
 export default function ScoreboardView() {
 	const navigate = useNavigate();
@@ -30,7 +31,7 @@ export default function ScoreboardView() {
 	useEffect(() => {
 		if (!roomIdSafe || !token) return;
 
-		const socket = connectRoomSocket(import.meta.env.VITE_API_BASE_URL);
+		const socket = connectRoomSocket(SOCKET_URL);
 
 		socket.on(SOCKET_EVENTS.SCORES_UPDATE, (payload: ScoresUpdatePayload) => {
 			setScores(payload.scores);

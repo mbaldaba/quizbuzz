@@ -49,33 +49,61 @@ export class EventsService {
   // ============================================================================
 
   async validateAndGetParticipant(sessionId: string, roomId: string) {
-    const session = await this.prisma.session.findUnique({
-      where: { id: sessionId },
-      include: {
-        user: {
-          include: {
-            roomParticipations: {
-              where: { roomId },
+    try {
+      this.logger.debug(`Validating participant: sessionId=${sessionId}, roomId=${roomId}`);
+      
+      const session = await this.prisma.session.findUnique({
+        where: { id: sessionId },
+        include: {
+          user: {
+            include: {
+              roomParticipations: {
+                where: { roomId },
+              },
             },
           },
         },
-      },
-    });
+      });
 
-    if (!session || session.expiresAt < new Date()) {
-      return null;
+      if (!session) {
+        this.logger.warn(`Session not found: ${sessionId}`);
+        return null;
+      }
+
+      if (session.expiresAt < new Date()) {
+        this.logger.warn(`Session expired: ${sessionId}, expiresAt=${session.expiresAt}`);
+        return null;
+      }
+
+      if (!session.user) {
+        this.logger.warn(`User not found for session: ${sessionId}`);
+        return null;
+      }
+
+      const participation = session.user.roomParticipations[0];
+      if (!participation) {
+        this.logger.warn(
+          `No participation found for sessionId=${sessionId}, roomId=${roomId}. User has ${session.user.roomParticipations.length} participations.`,
+        );
+        return null;
+      }
+
+      this.logger.debug(
+        `Participant validated: id=${participation.id}, nickname=${participation.nickname}`,
+      );
+
+      return {
+        id: participation.id,
+        nickname: participation.nickname,
+        userId: session.userId,
+      };
+    } catch (error) {
+      this.logger.error(
+        `Error validating participant: sessionId=${sessionId}, roomId=${roomId}`,
+        error,
+      );
+      throw error;
     }
-
-    const participation = session.user.roomParticipations[0];
-    if (!participation) {
-      return null;
-    }
-
-    return {
-      id: participation.id,
-      nickname: participation.nickname,
-      userId: session.userId,
-    };
   }
 
   async addClientToRoom(
