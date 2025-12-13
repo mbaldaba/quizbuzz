@@ -20,6 +20,8 @@ export const roomKeys = {
 	all: ["rooms"] as const,
 	lists: () => [...roomKeys.all, "list"] as const,
 	list: (params?: { perPage?: number }) => [...roomKeys.lists(), params] as const,
+	details: () => [...roomKeys.all, "detail"] as const,
+	detail: (id: string) => [...roomKeys.details(), id] as const,
 };
 
 /**
@@ -248,5 +250,33 @@ export function useEndRoom() {
 			const errorMessage = error instanceof Error ? error.message : "Failed to end room";
 			toast.error(errorMessage);
 		},
+	});
+}
+
+/**
+ * Hook to fetch room details by ID
+ * Uses React Query to cache and manage room details state
+ */
+export function useRoomDetails(roomId: string | null) {
+	const { data: session } = useSession();
+
+	return useQuery({
+		queryKey: roomKeys.detail(roomId || ""),
+		queryFn: async () => {
+			if (!roomId) {
+				throw new Error("Room ID is required");
+			}
+			const response = await client.get<{ 200: import("@repo/api-client").RoomDetailsResponseDto }>({
+				url: "/rooms/{id}",
+				path: { id: roomId },
+			});
+			if (!response.data) {
+				throw new Error("Failed to fetch room details");
+			}
+			return response.data;
+		},
+		enabled: !!session && !!roomId,
+		staleTime: 1000 * 10, // 10 seconds
+		refetchOnWindowFocus: false,
 	});
 }

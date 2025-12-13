@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import toast from "react-hot-toast";
 import { IActiveRoom, IPlayer, IQuestionData, QuestionType } from "../../common/types";
+import { useRoomDetails } from "../../hooks/useRooms";
 import styles from "./RoomDetails.module.scss";
 
 type RoomDetailsProps = {
@@ -9,6 +10,26 @@ type RoomDetailsProps = {
 	questions: IQuestionData[];
 	onClose: () => void;
 };
+
+// Type for API response question choice
+interface RoomQuestionChoiceDto {
+	id: string;
+	value: string;
+	isCorrect: boolean;
+}
+
+// Type for API response question
+interface RoomQuestionDto {
+	id: string;
+	type: "MULTIPLE_CHOICE" | "TRUE_OR_FALSE" | "IDENTIFICATION";
+	description: string;
+	correctAnswerId: string | null;
+	choices: RoomQuestionChoiceDto[];
+}
+
+// Union type to handle both API and local question formats
+type QuestionDisplay = IQuestionData | RoomQuestionDto;
+type ChoiceDisplay = { id: string; label?: string; text?: string; value?: string; isCorrect?: boolean };
 
 export default function RoomDetails({
 	room,
@@ -19,8 +40,15 @@ export default function RoomDetails({
 	const [currentQuestionIndex, setCurrentQuestionIndex] = useState<number>(0);
 	const [showAnswer, setShowAnswer] = useState<boolean>(false);
 
-	const currentQuestion = questions[currentQuestionIndex];
-	const isLastQuestion = currentQuestionIndex === questions.length - 1;
+	// Fetch room details by ID when modal is opened
+	const { data: roomDetails, isLoading, error } = useRoomDetails(room.id);
+
+	// Use questions from API if available, otherwise fallback to props
+	const apiQuestions = roomDetails?.questions || [];
+	const displayQuestions = apiQuestions.length > 0 ? apiQuestions : questions;
+	
+	const currentQuestion = displayQuestions[currentQuestionIndex];
+	const isLastQuestion = currentQuestionIndex === displayQuestions.length - 1;
 
 	const handleNext = () => {
 		if (!showAnswer) {
@@ -35,15 +63,22 @@ export default function RoomDetails({
 		}
 	};
 
-	const getAnswerDisplay = (question: IQuestionData): string => {
-		if (!question.correctAnswer) return "No answer provided";
-		
-		if (question.type === QuestionType.multiple_choice) {
-			const choice = question.choices?.find(c => c.id === question.correctAnswer);
-			return choice ? `${choice.label}. ${choice.text}` : question.correctAnswer;
+	const getAnswerDisplay = (question: QuestionDisplay): string => {
+		// Handle API response format (RoomQuestionDto)
+		if ('correctAnswerId' in question && question.correctAnswerId) {
+			const choice = question.choices?.find((c: RoomQuestionChoiceDto) => c.id === question.correctAnswerId);
+			return choice ? choice.value : "No answer provided";
 		}
 		
-		return question.correctAnswer;
+		// Handle local format (IQuestionData)
+		if ('correctAnswer' in question && !question.correctAnswer) return "No answer provided";
+		
+		if ('correctAnswer' in question && question.type === QuestionType.multiple_choice) {
+			const choice = question.choices?.find((c: ChoiceDisplay) => c.id === question.correctAnswer);
+			return choice ? `${choice.label}. ${choice.text}` : question.correctAnswer || "No answer provided";
+		}
+		
+		return 'correctAnswer' in question ? question.correctAnswer || "No answer provided" : "No answer provided";
 	};
 
 	const handleCopyRoomId = async (e: React.MouseEvent) => {
@@ -52,6 +87,7 @@ export default function RoomDetails({
 			await navigator.clipboard.writeText(room.id);
 			toast.success("Room ID copied to clipboard");
 		} catch (err) {
+			console.error(err)
 			toast.error("Failed to copy room ID");
 		}
 	};
@@ -123,12 +159,33 @@ export default function RoomDetails({
 				</div>
 
 				<div className={styles.spaceY4}>
+					{/* Loading State */}
+					{isLoading && (
+						<div className={styles.questionSection}>
+							<div style={{ padding: "2rem", textAlign: "center", color: "#666" }}>
+								<div style={{ marginBottom: "0.5rem" }}>Loading room details...</div>
+								<div style={{ fontSize: "0.875rem", opacity: 0.7 }}>
+									Fetching questions and participants
+								</div>
+							</div>
+						</div>
+					)}
+
+					{/* Error State */}
+					{error && !isLoading && (
+						<div className={styles.questionSection}>
+							<div style={{ padding: "2rem", textAlign: "center", color: "#dc2626" }}>
+								Failed to load room details. Please try again.
+							</div>
+						</div>
+					)}
+
 					{/* Current Question Section */}
-					{questions.length > 0 && currentQuestion ? (
+					{!isLoading && !error && displayQuestions.length > 0 && currentQuestion ? (
 						<div className={styles.questionSection}>
 							<div className={styles.questionHeader}>
 								<h3 className={`${styles.sectionTitle} ${styles.mb2}`}>
-									Current Question ({currentQuestionIndex + 1} / {questions.length})
+									Current Question ({currentQuestionIndex + 1} / {displayQuestions.length})
 								</h3>
 								<span className={styles.questionType}>
 									{currentQuestion.type}
@@ -136,15 +193,15 @@ export default function RoomDetails({
 							</div>
 							<div className={styles.questionContent}>
 								<p className={styles.questionText}>
-									{currentQuestion.text}
+									{currentQuestion.description || currentQuestion.text}
 								</p>
 								
 								{currentQuestion.choices && (
 									<div className={styles.choicesList}>
-										{currentQuestion.choices.map((choice) => (
+										{currentQuestion.choices.map((choice: ChoiceDisplay) => (
 											<div key={choice.id} className={styles.choiceItem}>
-												<span className={styles.choiceLabel}>{choice.label}.</span>
-												<span className={styles.choiceText}>{choice.text}</span>
+												<span className={styles.choiceLabel}>{choice.label || '•'}.</span>
+												<span className={styles.choiceText}>{choice.value || choice.text}</span>
 											</div>
 										))}
 									</div>
@@ -172,7 +229,7 @@ export default function RoomDetails({
 								</button>
 							</div>
 						</div>
-					) : questions.length === 0 ? (
+					) : !isLoading && !error && displayQuestions.length === 0 ? (
 						<div className={styles.questionSection}>
 							<p className={styles.roomListEmpty}>
 								No questions available for this room.
