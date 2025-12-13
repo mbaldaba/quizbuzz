@@ -233,6 +233,91 @@ export type RoomResponseDto = {
   updatedAt: string;
 };
 
+export type RoomQuestionChoiceDto = {
+  /**
+   * Unique identifier of the choice
+   */
+  id: string;
+  /**
+   * The text value of the choice
+   */
+  value: string;
+  /**
+   * Whether this choice is the correct answer
+   */
+  isCorrect: boolean;
+};
+
+export type RoomQuestionDto = {
+  /**
+   * Unique identifier of the question
+   */
+  id: string;
+  /**
+   * Type of the question
+   */
+  type: "MULTIPLE_CHOICE" | "TRUE_OR_FALSE" | "IDENTIFICATION";
+  /**
+   * The question text
+   */
+  description: string;
+  /**
+   * The ID of the correct answer
+   */
+  correctAnswerId: string | null;
+  /**
+   * Array of choices for this question
+   */
+  choices: Array<RoomQuestionChoiceDto>;
+};
+
+export type RoomDetailsResponseDto = {
+  /**
+   * Room ID
+   */
+  id: string;
+  /**
+   * Title of the room
+   */
+  title: string;
+  /**
+   * Maximum number of players allowed
+   */
+  maxPlayers: number;
+  /**
+   * Current status of the room
+   */
+  status: "CREATED" | "ONGOING" | "ENDED";
+  /**
+   * Whether the room has a password
+   */
+  hasPassword: boolean;
+  /**
+   * When the room was started
+   */
+  startedAt: string | null;
+  /**
+   * When the room was ended
+   */
+  endedAt: string | null;
+  /**
+   * ID of the user who created the room
+   */
+  createdById: string;
+  /**
+   * When the room was created
+   */
+  createdAt: string;
+  /**
+   * When the room was last updated
+   */
+  updatedAt: string;
+  /**
+   * Questions in the room, ordered by their order in the room. Last question is the current question.
+   */
+  questions: Array<RoomQuestionDto>;
+};
+
 export type JoinRoomDto = {
   /**
    * Room ID to join
@@ -315,7 +400,7 @@ export type AppControllerGetHelloData = {
   body?: never;
   path?: never;
   query?: never;
-  url: "/hello";
+  url: "/api/hello";
 };
 
 export type AppControllerGetHelloResponses = {
@@ -334,7 +419,7 @@ export type AuthControllerLoginData = {
   body: LoginDto;
   path?: never;
   query?: never;
-  url: "/auth/login";
+  url: "/api/auth/login";
 };
 
 export type AuthControllerLoginErrors = {
@@ -362,7 +447,7 @@ export type AuthControllerGetSessionData = {
   body?: never;
   path?: never;
   query?: never;
-  url: "/auth/session";
+  url: "/api/auth/session";
 };
 
 export type AuthControllerGetSessionErrors = {
@@ -386,14 +471,7 @@ export type AuthControllerLogoutData = {
   body?: never;
   path?: never;
   query?: never;
-  url: "/auth/logout";
-};
-
-export type AuthControllerLogoutErrors = {
-  /**
-   * No session found
-   */
-  401: unknown;
+  url: "/api/auth/logout";
 };
 
 export type AuthControllerLogoutResponses = {
@@ -424,7 +502,7 @@ export type QuestionsControllerFindAllData = {
      */
     search?: string;
   };
-  url: "/questions";
+  url: "/api/questions";
 };
 
 export type QuestionsControllerFindAllErrors = {
@@ -452,7 +530,7 @@ export type QuestionsControllerCreateData = {
   body: CreateQuestionDto;
   path?: never;
   query?: never;
-  url: "/questions";
+  url: "/api/questions";
 };
 
 export type QuestionsControllerCreateErrors = {
@@ -489,7 +567,7 @@ export type QuestionsControllerRemoveData = {
     id: string;
   };
   query?: never;
-  url: "/questions/{id}";
+  url: "/api/questions/{id}";
 };
 
 export type QuestionsControllerRemoveErrors = {
@@ -532,7 +610,7 @@ export type QuestionsControllerFindOneData = {
     id: string;
   };
   query?: never;
-  url: "/questions/{id}";
+  url: "/api/questions/{id}";
 };
 
 export type QuestionsControllerFindOneErrors = {
@@ -569,7 +647,7 @@ export type QuestionsControllerUpdateData = {
     id: string;
   };
   query?: never;
-  url: "/questions/{id}";
+  url: "/api/questions/{id}";
 };
 
 export type QuestionsControllerUpdateErrors = {
@@ -614,7 +692,7 @@ export type RoomsControllerListRoomsData = {
      */
     perPage?: number;
   };
-  url: "/rooms";
+  url: "/api/rooms";
 };
 
 export type RoomsControllerListRoomsErrors = {
@@ -639,7 +717,7 @@ export type RoomsControllerCreateRoomData = {
   body: CreateRoomDto;
   path?: never;
   query?: never;
-  url: "/rooms";
+  url: "/api/rooms";
 };
 
 export type RoomsControllerCreateRoomErrors = {
@@ -676,7 +754,7 @@ export type RoomsControllerDeleteRoomData = {
     id: string;
   };
   query?: never;
-  url: "/rooms/{id}";
+  url: "/api/rooms/{id}";
 };
 
 export type RoomsControllerDeleteRoomErrors = {
@@ -704,6 +782,43 @@ export type RoomsControllerDeleteRoomResponses = {
 export type RoomsControllerDeleteRoomResponse =
   RoomsControllerDeleteRoomResponses[keyof RoomsControllerDeleteRoomResponses];
 
+export type RoomsControllerGetRoomByIdData = {
+  body?: never;
+  path: {
+    /**
+     * Room ID
+     */
+    id: string;
+  };
+  query?: never;
+  url: "/api/rooms/{id}";
+};
+
+export type RoomsControllerGetRoomByIdErrors = {
+  /**
+   * Unauthorized
+   */
+  401: unknown;
+  /**
+   * Forbidden - Admin access required
+   */
+  403: unknown;
+  /**
+   * Room not found
+   */
+  404: unknown;
+};
+
+export type RoomsControllerGetRoomByIdResponses = {
+  /**
+   * Room details retrieved successfully
+   */
+  200: RoomDetailsResponseDto;
+};
+
+export type RoomsControllerGetRoomByIdResponse =
+  RoomsControllerGetRoomByIdResponses[keyof RoomsControllerGetRoomByIdResponses];
+
 export type RoomsControllerStartRoomData = {
   body?: never;
   path: {
@@ -713,7 +828,7 @@ export type RoomsControllerStartRoomData = {
     id: string;
   };
   query?: never;
-  url: "/rooms/{id}/start";
+  url: "/api/rooms/{id}/start";
 };
 
 export type RoomsControllerStartRoomErrors = {
@@ -754,7 +869,7 @@ export type RoomsControllerEndRoomData = {
     id: string;
   };
   query?: never;
-  url: "/rooms/{id}/end";
+  url: "/api/rooms/{id}/end";
 };
 
 export type RoomsControllerEndRoomErrors = {
@@ -790,7 +905,7 @@ export type ParticipantsControllerJoinRoomData = {
   body: JoinRoomDto;
   path?: never;
   query?: never;
-  url: "/participants/join";
+  url: "/api/participants/join";
 };
 
 export type ParticipantsControllerJoinRoomErrors = {
@@ -818,7 +933,7 @@ export type ParticipantsControllerLeaveRoomData = {
   body?: never;
   path?: never;
   query?: never;
-  url: "/participants/leave";
+  url: "/api/participants/leave";
 };
 
 export type ParticipantsControllerLeaveRoomErrors = {
@@ -839,7 +954,7 @@ export type QuizmasterControllerNextQuestionData = {
   body: NextQuestionDto;
   path?: never;
   query?: never;
-  url: "/quizmaster/next-question";
+  url: "/api/quizmaster/next-question";
 };
 
 export type QuizmasterControllerNextQuestionErrors = {
@@ -875,7 +990,7 @@ export type QuizmasterControllerRevealAnswerData = {
   body: RevealAnswerDto;
   path?: never;
   query?: never;
-  url: "/quizmaster/reveal-answer";
+  url: "/api/quizmaster/reveal-answer";
 };
 
 export type QuizmasterControllerRevealAnswerErrors = {

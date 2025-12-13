@@ -1,7 +1,7 @@
 {
   "openapi": "3.0.0",
   "paths": {
-    "/hello": {
+    "/api/hello": {
       "get": {
         "operationId": "AppController_getHello",
         "parameters": [],
@@ -29,7 +29,7 @@
         ]
       }
     },
-    "/auth/login": {
+    "/api/auth/login": {
       "post": {
         "operationId": "AuthController_login",
         "parameters": [],
@@ -67,7 +67,7 @@
         ]
       }
     },
-    "/auth/session": {
+    "/api/auth/session": {
       "get": {
         "operationId": "AuthController_getSession",
         "parameters": [],
@@ -92,16 +92,13 @@
         ]
       }
     },
-    "/auth/logout": {
+    "/api/auth/logout": {
       "post": {
         "operationId": "AuthController_logout",
         "parameters": [],
         "responses": {
           "200": {
             "description": "Successfully logged out"
-          },
-          "401": {
-            "description": "No session found"
           }
         },
         "summary": "Logout and clear session",
@@ -110,7 +107,7 @@
         ]
       }
     },
-    "/questions": {
+    "/api/questions": {
       "post": {
         "operationId": "QuestionsController_create",
         "parameters": [],
@@ -231,7 +228,7 @@
         ]
       }
     },
-    "/questions/{id}": {
+    "/api/questions/{id}": {
       "get": {
         "operationId": "QuestionsController_findOne",
         "parameters": [
@@ -390,7 +387,7 @@
         ]
       }
     },
-    "/rooms": {
+    "/api/rooms": {
       "post": {
         "operationId": "RoomsController_createRoom",
         "parameters": [],
@@ -485,7 +482,52 @@
         ]
       }
     },
-    "/rooms/{id}": {
+    "/api/rooms/{id}": {
+      "get": {
+        "operationId": "RoomsController_getRoomById",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Room ID",
+            "schema": {
+              "example": "clh1234567890",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Room details retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoomDetailsResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - Admin access required"
+          },
+          "404": {
+            "description": "Room not found"
+          }
+        },
+        "security": [
+          {
+            "sessionId": []
+          }
+        ],
+        "summary": "Get room details by ID (Admin only)",
+        "tags": [
+          "rooms"
+        ]
+      },
       "delete": {
         "operationId": "RoomsController_deleteRoom",
         "parameters": [
@@ -525,7 +567,7 @@
         ]
       }
     },
-    "/rooms/{id}/start": {
+    "/api/rooms/{id}/start": {
       "patch": {
         "operationId": "RoomsController_startRoom",
         "parameters": [
@@ -575,7 +617,7 @@
         ]
       }
     },
-    "/rooms/{id}/end": {
+    "/api/rooms/{id}/end": {
       "patch": {
         "operationId": "RoomsController_endRoom",
         "parameters": [
@@ -625,7 +667,7 @@
         ]
       }
     },
-    "/participants/join": {
+    "/api/participants/join": {
       "post": {
         "operationId": "ParticipantsController_joinRoom",
         "parameters": [],
@@ -663,7 +705,7 @@
         ]
       }
     },
-    "/participants/leave": {
+    "/api/participants/leave": {
       "post": {
         "operationId": "ParticipantsController_leaveRoom",
         "parameters": [],
@@ -681,7 +723,7 @@
         ]
       }
     },
-    "/quizmaster/next-question": {
+    "/api/quizmaster/next-question": {
       "post": {
         "description": "Adds a random question that has not been used in the room yet. Room must be in ONGOING status.",
         "operationId": "QuizmasterController_nextQuestion",
@@ -731,7 +773,7 @@
         ]
       }
     },
-    "/quizmaster/reveal-answer": {
+    "/api/quizmaster/reveal-answer": {
       "post": {
         "description": "Reveals the correct answer, evaluates all submissions, and awards 1 point to the first correct answer. Broadcasts results via Socket.IO.",
         "operationId": "QuizmasterController_revealAnswer",
@@ -1225,6 +1267,162 @@
           "createdById",
           "createdAt",
           "updatedAt"
+        ]
+      },
+      "RoomQuestionChoiceDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier of the choice",
+            "example": "clxxx123456789"
+          },
+          "value": {
+            "type": "string",
+            "description": "The text value of the choice",
+            "example": "Paris"
+          },
+          "isCorrect": {
+            "type": "boolean",
+            "description": "Whether this choice is the correct answer",
+            "example": true
+          }
+        },
+        "required": [
+          "id",
+          "value",
+          "isCorrect"
+        ]
+      },
+      "RoomQuestionDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier of the question",
+            "example": "clxxx123456789"
+          },
+          "type": {
+            "type": "string",
+            "description": "Type of the question",
+            "enum": [
+              "MULTIPLE_CHOICE",
+              "TRUE_OR_FALSE",
+              "IDENTIFICATION"
+            ],
+            "example": "MULTIPLE_CHOICE"
+          },
+          "description": {
+            "type": "string",
+            "description": "The question text",
+            "example": "What is the capital of France?"
+          },
+          "correctAnswerId": {
+            "type": "string",
+            "description": "The ID of the correct answer",
+            "example": "clxxx123456789",
+            "nullable": true
+          },
+          "choices": {
+            "description": "Array of choices for this question",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RoomQuestionChoiceDto"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "description",
+          "correctAnswerId",
+          "choices"
+        ]
+      },
+      "RoomDetailsResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Room ID",
+            "example": "clh1234567890"
+          },
+          "title": {
+            "type": "string",
+            "description": "Title of the room",
+            "example": "Math Quiz Room"
+          },
+          "maxPlayers": {
+            "type": "number",
+            "description": "Maximum number of players allowed",
+            "example": 10
+          },
+          "status": {
+            "type": "string",
+            "description": "Current status of the room",
+            "enum": [
+              "CREATED",
+              "ONGOING",
+              "ENDED"
+            ],
+            "example": "CREATED"
+          },
+          "hasPassword": {
+            "type": "boolean",
+            "description": "Whether the room has a password",
+            "example": true
+          },
+          "startedAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "When the room was started",
+            "example": "2025-11-30T12:00:00.000Z",
+            "nullable": true
+          },
+          "endedAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "When the room was ended",
+            "example": "2025-11-30T14:00:00.000Z",
+            "nullable": true
+          },
+          "createdById": {
+            "type": "string",
+            "description": "ID of the user who created the room",
+            "example": "clxxx123456789"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "When the room was created",
+            "example": "2025-11-30T10:00:00.000Z"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "When the room was last updated",
+            "example": "2025-11-30T12:00:00.000Z"
+          },
+          "questions": {
+            "description": "Questions in the room, ordered by their order in the room. Last question is the current question.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RoomQuestionDto"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "maxPlayers",
+          "status",
+          "hasPassword",
+          "startedAt",
+          "endedAt",
+          "createdById",
+          "createdAt",
+          "updatedAt",
+          "questions"
         ]
       },
       "JoinRoomDto": {

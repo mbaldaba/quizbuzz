@@ -12,7 +12,6 @@ import type {
   AuthControllerLoginErrors,
   AuthControllerLoginResponses,
   AuthControllerLogoutData,
-  AuthControllerLogoutErrors,
   AuthControllerLogoutResponses,
   ParticipantsControllerJoinRoomData,
   ParticipantsControllerJoinRoomErrors,
@@ -50,6 +49,9 @@ import type {
   RoomsControllerEndRoomData,
   RoomsControllerEndRoomErrors,
   RoomsControllerEndRoomResponses,
+  RoomsControllerGetRoomByIdData,
+  RoomsControllerGetRoomByIdErrors,
+  RoomsControllerGetRoomByIdResponses,
   RoomsControllerListRoomsData,
   RoomsControllerListRoomsErrors,
   RoomsControllerListRoomsResponses,
@@ -85,7 +87,7 @@ export const appControllerGetHello = <ThrowOnError extends boolean = false>(
     AppControllerGetHelloResponses,
     unknown,
     ThrowOnError
-  >({ url: "/hello", ...options });
+  >({ url: "/api/hello", ...options });
 
 /**
  * Login with username and password
@@ -98,7 +100,7 @@ export const authControllerLogin = <ThrowOnError extends boolean = false>(
     AuthControllerLoginErrors,
     ThrowOnError
   >({
-    url: "/auth/login",
+    url: "/api/auth/login",
     ...options,
     headers: {
       "Content-Type": "application/json",
@@ -116,7 +118,7 @@ export const authControllerGetSession = <ThrowOnError extends boolean = false>(
     AuthControllerGetSessionResponses,
     AuthControllerGetSessionErrors,
     ThrowOnError
-  >({ url: "/auth/session", ...options });
+  >({ url: "/api/auth/session", ...options });
 
 /**
  * Logout and clear session
@@ -126,9 +128,9 @@ export const authControllerLogout = <ThrowOnError extends boolean = false>(
 ) =>
   (options?.client ?? client).post<
     AuthControllerLogoutResponses,
-    AuthControllerLogoutErrors,
+    unknown,
     ThrowOnError
-  >({ url: "/auth/logout", ...options });
+  >({ url: "/api/auth/logout", ...options });
 
 /**
  * Get paginated list of questions
@@ -142,7 +144,7 @@ export const questionsControllerFindAll = <
     QuestionsControllerFindAllResponses,
     QuestionsControllerFindAllErrors,
     ThrowOnError
-  >({ url: "/questions", ...options });
+  >({ url: "/api/questions", ...options });
 
 /**
  * Create a new question with choices
@@ -155,7 +157,7 @@ export const questionsControllerCreate = <ThrowOnError extends boolean = false>(
     QuestionsControllerCreateErrors,
     ThrowOnError
   >({
-    url: "/questions",
+    url: "/api/questions",
     ...options,
     headers: {
       "Content-Type": "application/json",
@@ -173,7 +175,7 @@ export const questionsControllerRemove = <ThrowOnError extends boolean = false>(
     QuestionsControllerRemoveResponses,
     QuestionsControllerRemoveErrors,
     ThrowOnError
-  >({ url: "/questions/{id}", ...options });
+  >({ url: "/api/questions/{id}", ...options });
 
 /**
  * Get a question by ID
@@ -187,7 +189,7 @@ export const questionsControllerFindOne = <
     QuestionsControllerFindOneResponses,
     QuestionsControllerFindOneErrors,
     ThrowOnError
-  >({ url: "/questions/{id}", ...options });
+  >({ url: "/api/questions/{id}", ...options });
 
 /**
  * Update a question and its choices
@@ -200,7 +202,7 @@ export const questionsControllerUpdate = <ThrowOnError extends boolean = false>(
     QuestionsControllerUpdateErrors,
     ThrowOnError
   >({
-    url: "/questions/{id}",
+    url: "/api/questions/{id}",
     ...options,
     headers: {
       "Content-Type": "application/json",
@@ -218,7 +220,7 @@ export const roomsControllerListRooms = <ThrowOnError extends boolean = false>(
     RoomsControllerListRoomsResponses,
     RoomsControllerListRoomsErrors,
     ThrowOnError
-  >({ url: "/rooms", ...options });
+  >({ url: "/api/rooms", ...options });
 
 /**
  * Create a new room (Admin only)
@@ -231,7 +233,7 @@ export const roomsControllerCreateRoom = <ThrowOnError extends boolean = false>(
     RoomsControllerCreateRoomErrors,
     ThrowOnError
   >({
-    url: "/rooms",
+    url: "/api/rooms",
     ...options,
     headers: {
       "Content-Type": "application/json",
@@ -249,7 +251,21 @@ export const roomsControllerDeleteRoom = <ThrowOnError extends boolean = false>(
     RoomsControllerDeleteRoomResponses,
     RoomsControllerDeleteRoomErrors,
     ThrowOnError
-  >({ url: "/rooms/{id}", ...options });
+  >({ url: "/api/rooms/{id}", ...options });
+
+/**
+ * Get room details by ID (Admin only)
+ */
+export const roomsControllerGetRoomById = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<RoomsControllerGetRoomByIdData, ThrowOnError>,
+) =>
+  (options.client ?? client).get<
+    RoomsControllerGetRoomByIdResponses,
+    RoomsControllerGetRoomByIdErrors,
+    ThrowOnError
+  >({ url: "/api/rooms/{id}", ...options });
 
 /**
  * Start a room (Admin only)
@@ -261,7 +277,7 @@ export const roomsControllerStartRoom = <ThrowOnError extends boolean = false>(
     RoomsControllerStartRoomResponses,
     RoomsControllerStartRoomErrors,
     ThrowOnError
-  >({ url: "/rooms/{id}/start", ...options });
+  >({ url: "/api/rooms/{id}/start", ...options });
 
 /**
  * End a room (Admin only)
@@ -273,7 +289,7 @@ export const roomsControllerEndRoom = <ThrowOnError extends boolean = false>(
     RoomsControllerEndRoomResponses,
     RoomsControllerEndRoomErrors,
     ThrowOnError
-  >({ url: "/rooms/{id}/end", ...options });
+  >({ url: "/api/rooms/{id}/end", ...options });
 
 /**
  * Join a room as a participant
@@ -288,7 +304,7 @@ export const participantsControllerJoinRoom = <
     ParticipantsControllerJoinRoomErrors,
     ThrowOnError
   >({
-    url: "/participants/join",
+    url: "/api/participants/join",
     ...options,
     headers: {
       "Content-Type": "application/json",
@@ -308,7 +324,7 @@ export const participantsControllerLeaveRoom = <
     ParticipantsControllerLeaveRoomResponses,
     ParticipantsControllerLeaveRoomErrors,
     ThrowOnError
-  >({ url: "/participants/leave", ...options });
+  >({ url: "/api/participants/leave", ...options });
 
 /**
  * Add a random question from the question bank to a room
@@ -325,7 +341,7 @@ export const quizmasterControllerNextQuestion = <
     QuizmasterControllerNextQuestionErrors,
     ThrowOnError
   >({
-    url: "/quizmaster/next-question",
+    url: "/api/quizmaster/next-question",
     ...options,
     headers: {
       "Content-Type": "application/json",
@@ -348,7 +364,7 @@ export const quizmasterControllerRevealAnswer = <
     QuizmasterControllerRevealAnswerErrors,
     ThrowOnError
   >({
-    url: "/quizmaster/reveal-answer",
+    url: "/api/quizmaster/reveal-answer",
     ...options,
     headers: {
       "Content-Type": "application/json",
