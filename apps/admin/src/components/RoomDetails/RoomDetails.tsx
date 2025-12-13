@@ -1,6 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import toast from "react-hot-toast";
 import { IActiveRoom, IPlayer, IQuestionData, QuestionType } from "../../common/types";
+import { useNextQuestion, useRevealAnswer, useCurrentQuestion } from "../../hooks/useQuizmaster";
 import styles from "./RoomDetails.module.scss";
 
 type RoomDetailsProps = {
@@ -16,23 +17,40 @@ export default function RoomDetails({
 	questions,
 	onClose,
 }: RoomDetailsProps) {
-	const [currentQuestionIndex, setCurrentQuestionIndex] = useState<number>(0);
 	const [showAnswer, setShowAnswer] = useState<boolean>(false);
 
-	const currentQuestion = questions[currentQuestionIndex];
-	const isLastQuestion = currentQuestionIndex === questions.length - 1;
+	// Use quizmaster hooks for API integration
+	const { data: currentQuestion } = useCurrentQuestion(room.id);
+	const nextQuestionMutation = useNextQuestion();
+	const revealAnswerMutation = useRevealAnswer();
 
-	const handleNext = () => {
-		if (!showAnswer) {
-			// Show answer first
-			setShowAnswer(true);
-		} else {
-			// Move to next question
-			if (!isLastQuestion) {
-				setCurrentQuestionIndex(currentQuestionIndex + 1);
-				setShowAnswer(false);
-			}
+	// Reset showAnswer when question changes
+	useEffect(() => {
+		setShowAnswer(false);
+	}, [currentQuestion?.id]);
+
+	const handleShowAnswer = () => {
+		if (!currentQuestion) {
+			toast.error("No question available");
+			return;
 		}
+
+		revealAnswerMutation.mutate(
+			{ roomId: room.id, questionId: currentQuestion.id },
+			{
+				onSuccess: () => {
+					setShowAnswer(true);
+				},
+			}
+		);
+	};
+
+	const handleNextQuestion = () => {
+		nextQuestionMutation.mutate(room.id, {
+			onSuccess: () => {
+				setShowAnswer(false);
+			},
+		});
 	};
 
 	const getAnswerDisplay = (question: IQuestionData): string => {
@@ -124,11 +142,11 @@ export default function RoomDetails({
 
 				<div className={styles.spaceY4}>
 					{/* Current Question Section */}
-					{questions.length > 0 && currentQuestion ? (
+					{currentQuestion ? (
 						<div className={styles.questionSection}>
 							<div className={styles.questionHeader}>
 								<h3 className={`${styles.sectionTitle} ${styles.mb2}`}>
-									Current Question ({currentQuestionIndex + 1} / {questions.length})
+									Current Question
 								</h3>
 								<span className={styles.questionType}>
 									{currentQuestion.type}
@@ -150,7 +168,7 @@ export default function RoomDetails({
 									</div>
 								)}
 
-								{showAnswer && (
+								{showAnswer && currentQuestion.correctAnswer && (
 									<div className={styles.answerSection}>
 										<p className={styles.answerLabel}>Correct Answer:</p>
 										<p className={styles.answerText}>
@@ -159,26 +177,42 @@ export default function RoomDetails({
 									</div>
 								)}
 
-								<button
-									type="button"
-									onClick={handleNext}
-									className={styles.nextButton}
-									disabled={isLastQuestion && showAnswer}
-								>
-									{showAnswer 
-										? (isLastQuestion ? "Quiz Complete" : "Next Question")
-										: "Show Answer"
-									}
-								</button>
+								{!showAnswer ? (
+									<button
+										type="button"
+										onClick={handleShowAnswer}
+										className={styles.nextButton}
+										disabled={revealAnswerMutation.isPending}
+									>
+										{revealAnswerMutation.isPending ? "Revealing..." : "Show Answer"}
+									</button>
+								) : (
+									<button
+										type="button"
+										onClick={handleNextQuestion}
+										className={styles.nextButton}
+										disabled={nextQuestionMutation.isPending}
+									>
+										{nextQuestionMutation.isPending ? "Loading..." : "Next Question"}
+									</button>
+								)}
 							</div>
 						</div>
-					) : questions.length === 0 ? (
+					) : (
 						<div className={styles.questionSection}>
 							<p className={styles.roomListEmpty}>
-								No questions available for this room.
+								No question active. Click "Next Question" to start.
 							</p>
+							<button
+								type="button"
+								onClick={handleNextQuestion}
+								className={styles.nextButton}
+								disabled={nextQuestionMutation.isPending}
+							>
+								{nextQuestionMutation.isPending ? "Loading..." : "Start First Question"}
+							</button>
 						</div>
-					) : null}
+					)}
 
 					{/* Players Section */}
 					<div>
