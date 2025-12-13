@@ -10,11 +10,16 @@ import { PrismaModule } from '../../prisma/prisma.module';
     PrismaModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
-      useFactory: async (configService: ConfigService) => ({
-        secret: configService.get<string>('JWT_SECRET'),
-        signOptions: { expiresIn: '7d' },
-      }),
       inject: [ConfigService],
+      useFactory: (configService: ConfigService) => {
+        const expiryDays = configService.get<number>('SESSION_EXPIRY_DAYS') ?? 7;
+        return {
+          secret: configService.get<string>('AUTH_SECRET'),
+          signOptions: {
+            expiresIn: `${expiryDays}d`,
+          },
+        };
+      },
     }),
   ],
   providers: [EventsGateway, EventsService],
