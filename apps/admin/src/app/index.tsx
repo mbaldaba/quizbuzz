@@ -1,30 +1,89 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import toast from "react-hot-toast";
 import CreateRoomForm from "../components/CreateRoomForm/CreateRoomForm";
 import RoomList from "../components/RoomList/RoomList";
 import RoomDetails from "../components/RoomDetails/RoomDetails";
 import QuestionManager from "../components/QuestionManager/QuestionManager";
 import { IActiveRoom, IQuestionData, ActiveRoomEnum, IPlayer } from "../common/types";
-import { mockActiveRooms, mockPlayers, mockQuestions } from "../data/staticData";
+import { mockPlayers } from "../data/staticData";
 import { useLogout, useSession } from "../hooks/useAuth";
-
-function generateRoomNumber(): string {
-	const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-	let result = "";
-	for (let i = 0; i < 4; i++) {
-		result += chars.charAt(Math.floor(Math.random() * chars.length));
-	}
-	return result;
-}
+import {
+	getQuestions,
+	createQuestion,
+	updateQuestion,
+	deleteQuestion,
+	mapQuestionToApiCreate,
+	mapQuestionToApiUpdate,
+	mapQuestionFromApi,
+	getRooms,
+	createRoom,
+	deleteRoom,
+	startRoom,
+	endRoom,
+	mapRoomFromApi,
+	mapRoomToApiCreate,
+} from "../common/api";
 
 export default function AdminDashboard() {
-	const [rooms, setRooms] = useState<IActiveRoom[]>(mockActiveRooms);
-	const [questions, setQuestions] = useState<IQuestionData[]>(mockQuestions);
+	const [rooms, setRooms] = useState<IActiveRoom[]>([]);
+	const [questions, setQuestions] = useState<IQuestionData[]>([]);
 	const [selectedRoom, setSelectedRoom] = useState<IActiveRoom | null>(null);
-	const [editingRoom, setEditingRoom] = useState<IActiveRoom | null>(null);
 	const [players, setPlayers] = useState<IPlayer[]>(mockPlayers);
+	const [questionsLoading, setQuestionsLoading] = useState(true);
+	const [questionsError, setQuestionsError] = useState<string | null>(null);
+	const [roomsLoading, setRoomsLoading] = useState(true);
+	const [roomsError, setRoomsError] = useState<string | null>(null);
 	
 	const { data: session } = useSession();
 	const logoutMutation = useLogout();
+
+	// Fetch questions on mount
+	useEffect(() => {
+		const fetchQuestions = async () => {
+			try {
+				setQuestionsLoading(true);
+				setQuestionsError(null);
+				const response = await getQuestions({ perPage: 100 }); // Fetch all questions
+				const mappedQuestions = response.data.map(mapQuestionFromApi);
+				setQuestions(mappedQuestions);
+			} catch (error) {
+				console.error("Failed to fetch questions:", error);
+				const errorMessage = error instanceof Error ? error.message : "Failed to load questions";
+				setQuestionsError(errorMessage);
+			} finally {
+				setQuestionsLoading(false);
+			}
+		};
+
+		if (session) {
+			fetchQuestions();
+		}
+	}, [session]);
+
+	// Fetch rooms on mount
+	useEffect(() => {
+		const fetchRooms = async () => {
+			try {
+				setRoomsLoading(true);
+				setRoomsError(null);
+				const response = await getRooms({ perPage: 100 }); // Fetch all rooms
+				const mappedRooms = response.data.map((room) => 
+					mapRoomFromApi(room, session?.username || "You")
+				);
+				setRooms(mappedRooms);
+			} catch (error) {
+				console.error("Failed to fetch rooms:", error);
+				const errorMessage = error instanceof Error ? error.message : "Failed to load rooms";
+				setRoomsError(errorMessage);
+			} finally {
+				setRoomsLoading(false);
+			}
+		};
+
+		if (session) {
+			fetchRooms();
+		}
+	}, [session]);
 
 	const handleLogout = async () => {
 		try {
@@ -34,81 +93,76 @@ export default function AdminDashboard() {
 		}
 	};
 
-	const handleCreateRoom = (roomData: {
+	const handleCreateRoom = async (roomData: {
 		title: string;
 		maxPlayers?: number;
 		requiresPassword: boolean;
 		password?: string;
 	}) => {
-		const newRoom: IActiveRoom = {
-			id: rooms.length + 1,
-			roomNumber: generateRoomNumber(),
-			title: roomData.title,
-			hostName: "You", // In real app, this would come from auth
-			status: ActiveRoomEnum.WAITING,
-			players: 0,
-			maxPlayers: roomData.maxPlayers,
-			requiresPassword: roomData.requiresPassword,
-			password: roomData.password || null,
-			createdAt: new Date().toISOString(),
-		};
-		setRooms([newRoom, ...rooms]);
-		setEditingRoom(null);
-	};
-
-	const handleUpdateRoom = (
-		roomId: number,
-		roomData: {
-			title: string;
-			maxPlayers?: number;
-			requiresPassword: boolean;
-			password?: string;
-		}
-	) => {
-		setRooms(
-			rooms.map((room) =>
-				room.id === roomId
-					? {
-							...room,
-							title: roomData.title,
-							maxPlayers: roomData.maxPlayers,
-							requiresPassword: roomData.requiresPassword,
-							password: roomData.requiresPassword
-								? roomData.password || null
-								: null,
-						}
-					: room
-			)
-		);
-		setEditingRoom(null);
-	};
-
-	const handleDeleteRoom = (roomId: number) => {
-		setRooms(rooms.filter((room) => room.id !== roomId));
-		if (selectedRoom?.id === roomId) {
-			setSelectedRoom(null);
-		}
-		if (editingRoom?.id === roomId) {
-			setEditingRoom(null);
+		try {
+			const apiRoomData = mapRoomToApiCreate(roomData);
+			const created = await createRoom(apiRoomData);
+			const mappedRoom = mapRoomFromApi(created, session?.username || "You");
+			setRooms([mappedRoom, ...rooms]);
+			toast.success("Room created successfully");
+		} catch (error) {
+			console.error("Failed to create room:", error);
+			const errorMessage = error instanceof Error ? error.message : "Failed to create room";
+			toast.error(errorMessage);
+			throw error;
 		}
 	};
 
-	const handleStartRoom = (roomId: number) => {
-		setRooms(
-			rooms.map((room) =>
-				room.id === roomId
-					? { ...room, status: ActiveRoomEnum.ONGOING }
-					: room
-			)
-		);
+	const handleDeleteRoom = async (roomId: string) => {
+		try {
+			await deleteRoom(roomId);
+			setRooms(rooms.filter((room) => room.id !== roomId));
+			if (selectedRoom?.id === roomId) {
+				setSelectedRoom(null);
+			}
+			toast.success("Room deleted successfully");
+		} catch (error) {
+			console.error("Failed to delete room:", error);
+			const errorMessage = error instanceof Error ? error.message : "Failed to delete room";
+			toast.error(errorMessage);
+			throw error;
+		}
 	};
 
-	const handleEndRoom = (roomId: number) => {
-		setRooms(
-			rooms.map((room) =>
-				room.id === roomId ? { ...room, status: ActiveRoomEnum.ENDED } : room
-			)
-		);
+	const handleStartRoom = async (roomId: string) => {
+		try {
+			const updated = await startRoom(roomId);
+			const mappedRoom = mapRoomFromApi(updated, session?.username || "You");
+			setRooms(
+				rooms.map((room) =>
+					room.id === roomId ? mappedRoom : room
+				)
+			);
+			toast.success("Room started successfully");
+		} catch (error) {
+			console.error("Failed to start room:", error);
+			const errorMessage = error instanceof Error ? error.message : "Failed to start room";
+			toast.error(errorMessage);
+			throw error;
+		}
+	};
+
+	const handleEndRoom = async (roomId: string) => {
+		try {
+			const updated = await endRoom(roomId);
+			const mappedRoom = mapRoomFromApi(updated, session?.username || "You");
+			setRooms(
+				rooms.map((room) =>
+					room.id === roomId ? mappedRoom : room
+				)
+			);
+			toast.success("Room ended successfully");
+		} catch (error) {
+			console.error("Failed to end room:", error);
+			const errorMessage = error instanceof Error ? error.message : "Failed to end room";
+			toast.error(errorMessage);
+			throw error;
+		}
 	};
 
 	const handleRoomClick = (room: IActiveRoom) => {
@@ -116,27 +170,54 @@ export default function AdminDashboard() {
 		// In real app, fetch players for this room
 	};
 
-	const handleAddQuestion = (question: Omit<IQuestionData, "id">) => {
-		const newQuestion: IQuestionData = {
-			...question,
-			id: `q${Date.now()}`,
-		};
-		setQuestions([...questions, newQuestion]);
+	const handleAddQuestion = async (question: Omit<IQuestionData, "id">) => {
+		try {
+			const apiQuestion = mapQuestionToApiCreate(question);
+			const created = await createQuestion(apiQuestion);
+			const mappedQuestion = mapQuestionFromApi(created);
+			setQuestions((prev) => [mappedQuestion, ...prev]);
+			toast.success("Question created successfully");
+		} catch (error) {
+			console.error("Failed to create question:", error);
+			const errorMessage = error instanceof Error ? error.message : "Failed to create question";
+			toast.error(errorMessage);
+			throw error;
+		}
 	};
 
-	const handleUpdateQuestion = (
+	const handleUpdateQuestion = async (
 		questionId: string,
 		question: Omit<IQuestionData, "id">
 	) => {
-		setQuestions(
-			questions.map((q) =>
-				q.id === questionId ? { ...q, ...question } : q
-			)
-		);
+		try {
+			const apiQuestion = mapQuestionToApiUpdate(question);
+			const updated = await updateQuestion(questionId, apiQuestion);
+			const mappedQuestion = mapQuestionFromApi(updated);
+			setQuestions((prev) =>
+				prev.map((q) =>
+					q.id === questionId ? mappedQuestion : q
+				)
+			);
+			toast.success("Question updated successfully");
+		} catch (error) {
+			console.error("Failed to update question:", error);
+			const errorMessage = error instanceof Error ? error.message : "Failed to update question";
+			toast.error(errorMessage);
+			throw error;
+		}
 	};
 
-	const handleDeleteQuestion = (questionId: string) => {
-		setQuestions(questions.filter((q) => q.id !== questionId));
+	const handleDeleteQuestion = async (questionId: string) => {
+		try {
+			await deleteQuestion(questionId);
+			setQuestions((prev) => prev.filter((q) => q.id !== questionId));
+			toast.success("Question deleted successfully");
+		} catch (error) {
+			console.error("Failed to delete question:", error);
+			const errorMessage = error instanceof Error ? error.message : "Failed to delete question";
+			toast.error(errorMessage);
+			throw error;
+		}
 	};
 
 	return (
@@ -176,25 +257,20 @@ export default function AdminDashboard() {
 
 				{/* Main Content Grid */}
 				<div className="admin-grid">
-					{/* Left: Create/Edit Room */}
+					{/* Left: Create Room */}
 					<section className="admin-section">
 						<div className="section-header">
 							<div className="flex-1">
 								<h2 className="section-title">
-									{editingRoom ? "Edit Room" : "Create New Room"}
+									Create New Room
 								</h2>
 								<p className="section-subtitle">
-									{editingRoom
-										? "Update room details"
-										: "Set up a new quiz room for players to join"}
+									Set up a new quiz room for players to join
 								</p>
 							</div>
 						</div>
 						<CreateRoomForm
 							onCreate={handleCreateRoom}
-							onUpdate={handleUpdateRoom}
-							editingRoom={editingRoom}
-							onCancel={() => setEditingRoom(null)}
 						/>
 					</section>
 
@@ -214,25 +290,43 @@ export default function AdminDashboard() {
 								{rooms.length === 1 ? "room" : "rooms"}
 							</span>
 						</div>
-
+						{roomsError && (
+							<div style={{ padding: "1rem", background: "#fee", color: "#c33", borderRadius: "0.5rem", marginBottom: "1rem" }}>
+								Error loading rooms: {roomsError}
+							</div>
+						)}
 						<RoomList
 							rooms={rooms}
 							onRoomClick={handleRoomClick}
 							onStartRoom={handleStartRoom}
 							onEndRoom={handleEndRoom}
-							onEditRoom={setEditingRoom}
 							onDeleteRoom={handleDeleteRoom}
 						/>
+						{roomsLoading && (
+							<div style={{ padding: "1rem", textAlign: "center", color: "#666" }}>
+								Loading rooms...
+							</div>
+						)}
 					</section>
 				</div>
 
 				{/* Question Manager */}
+				{questionsError && (
+					<div style={{ padding: "1rem", background: "#fee", color: "#c33", borderRadius: "0.5rem", marginBottom: "1rem" }}>
+						Error loading questions: {questionsError}
+					</div>
+				)}
 				<QuestionManager
 					questions={questions}
 					onAddQuestion={handleAddQuestion}
 					onUpdateQuestion={handleUpdateQuestion}
 					onDeleteQuestion={handleDeleteQuestion}
 				/>
+				{questionsLoading && (
+					<div style={{ padding: "1rem", textAlign: "center", color: "#666" }}>
+						Loading questions...
+					</div>
+				)}
 			</div>
 
 			{/* Room Details Modal */}

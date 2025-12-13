@@ -5,10 +5,9 @@ import styles from "./RoomList.module.scss";
 type RoomListProps = {
 	rooms: IActiveRoom[];
 	onRoomClick: (room: IActiveRoom) => void;
-	onStartRoom?: (roomId: number) => void;
-	onEndRoom?: (roomId: number) => void;
-	onEditRoom?: (room: IActiveRoom) => void;
-	onDeleteRoom?: (roomId: number) => void;
+	onStartRoom?: (roomId: string) => void;
+	onEndRoom?: (roomId: string) => void;
+	onDeleteRoom?: (roomId: string) => void;
 };
 
 export default function RoomList({
@@ -16,7 +15,6 @@ export default function RoomList({
 	onRoomClick,
 	onStartRoom,
 	onEndRoom,
-	onEditRoom,
 	onDeleteRoom,
 }: RoomListProps) {
 	return (
@@ -103,32 +101,6 @@ export default function RoomList({
 									)}
 								</div>
 								<div className={styles.buttonGroup}>
-									{onEditRoom && (
-										<button
-											type="button"
-											onClick={(e) => {
-												e.stopPropagation();
-												onEditRoom(room);
-											}}
-											className={`${styles.btn} ${styles.btnIcon}`}
-											title="Edit room"
-										>
-											<svg
-												width="14"
-												height="14"
-												fill="none"
-												stroke="currentColor"
-												viewBox="0 0 24 24"
-											>
-												<path
-													strokeLinecap="round"
-													strokeLinejoin="round"
-													strokeWidth={2}
-													d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-												/>
-											</svg>
-										</button>
-									)}
 									{onDeleteRoom && (
 										<button
 											type="button"
