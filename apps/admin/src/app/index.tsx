@@ -5,6 +5,7 @@ import RoomDetails from "../components/RoomDetails/RoomDetails";
 import QuestionManager from "../components/QuestionManager/QuestionManager";
 import { IActiveRoom, IQuestionData, ActiveRoomEnum, IPlayer } from "../common/types";
 import { mockActiveRooms, mockPlayers, mockQuestions } from "../data/staticData";
+import { useLogout, useSession } from "../hooks/useAuth";
 
 function generateRoomNumber(): string {
 	const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
@@ -21,6 +22,17 @@ export default function AdminDashboard() {
 	const [selectedRoom, setSelectedRoom] = useState<IActiveRoom | null>(null);
 	const [editingRoom, setEditingRoom] = useState<IActiveRoom | null>(null);
 	const [players, setPlayers] = useState<IPlayer[]>(mockPlayers);
+	
+	const { data: session } = useSession();
+	const logoutMutation = useLogout();
+
+	const handleLogout = async () => {
+		try {
+			await logoutMutation.mutateAsync();
+		} catch (error) {
+			console.error("Logout failed:", error);
+		}
+	};
 
 	const handleCreateRoom = (roomData: {
 		title: string;
@@ -132,15 +144,34 @@ export default function AdminDashboard() {
 			<div className="admin-content">
 				{/* Header */}
 				<div className="admin-header">
-					<p className="admin-label">
-						QuizzBuzz Admin
-					</p>
-					<h1 className="admin-title">
-						Quiz Master Dashboard
-					</h1>
-					<p className="admin-subtitle">
-						Create and manage quiz rooms, questions, and monitor player activity
-					</p>
+					<div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "1rem" }}>
+						<div style={{ flex: 1 }}>
+							<p className="admin-label">
+								QuizzBuzz Admin
+							</p>
+							<h1 className="admin-title">
+								Quiz Master Dashboard
+							</h1>
+							<p className="admin-subtitle">
+								Create and manage quiz rooms, questions, and monitor player activity
+							</p>
+						</div>
+						<div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "0.5rem" }}>
+							{session && (
+								<div style={{ fontSize: "0.75rem", color: "rgba(148, 163, 184, 0.8)", marginBottom: "0.25rem" }}>
+									Logged in as <strong style={{ color: "rgb(148, 163, 184)" }}>{session.username}</strong>
+								</div>
+							)}
+							<button
+								onClick={handleLogout}
+								disabled={logoutMutation.isPending}
+								className="btn btn-secondary"
+								style={{ fontSize: "0.75rem", padding: "0.5rem 0.75rem" }}
+							>
+								{logoutMutation.isPending ? "Logging out..." : "Logout"}
+							</button>
+						</div>
+					</div>
 				</div>
 
 				{/* Main Content Grid */}

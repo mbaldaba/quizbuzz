@@ -8,12 +8,14 @@ import { AppModule } from './app.module';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
+  // Enable CORS
   app.enableCors({
-		origin: [
-			"http://localhost:4000"
-		],
-		credentials: true,
-	});
+    origin: ['http://localhost:3000', 'http://localhost:4000'],
+    credentials: true,
+  });
+
+  // Set global API prefix
+  app.setGlobalPrefix('api');
 
   // Get ConfigService instance
   const configService = app.get(ConfigService);
@@ -48,7 +50,7 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('openapi', app, document);
 
-  const port = process.env.PORT || 5000;
+  const port = process.env.PORT || 4242;
   await app.listen(port);
   
   console.log(`🚀 Application is running on: http://localhost:${port}`);

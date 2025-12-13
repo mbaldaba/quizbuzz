@@ -93,7 +93,9 @@ export class AuthService {
   }
 
   async logout(sessionId: string): Promise<void> {
-    await this.prisma.session.delete({
+    // Delete session if it exists (idempotent)
+    // Use deleteMany instead of delete to avoid throwing if session doesn't exist
+    await this.prisma.session.deleteMany({
       where: { id: sessionId },
     });
   }
