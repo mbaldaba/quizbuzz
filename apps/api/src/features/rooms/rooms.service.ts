@@ -12,6 +12,7 @@ import { EventsService } from '../events/events.service';
 import { EventsGateway } from '../events/events.gateway';
 import { CreateRoomDto } from './dto/create-room.dto';
 import { RoomResponseDto } from './dto/room-response.dto';
+import { RoomDetailsResponseDto, RoomQuestionDto, RoomQuestionChoiceDto } from './dto/room-details-response.dto';
 import { PaginatedResponseDto } from '../../common/dto/paginated-response.dto';
 
 @Injectable()
@@ -149,6 +150,62 @@ export class RoomsService {
     this.eventsGateway.broadcastQuizEnded(roomId, quizEndedPayload);
 
     return this.toRoomResponse(updatedRoom);
+  }
+
+  async getRoomById(roomId: string): Promise<RoomDetailsResponseDto> {
+    const room = await this.prisma.room.findUnique({
+      where: { id: roomId },
+      include: {
+        roomQuestions: {
+          include: {
+            question: {
+              include: {
+                choices: true,
+              },
+            },
+          },
+          orderBy: {
+            createdAt: 'asc',
+          },
+        },
+      },
+    });
+
+    if (!room) {
+      throw new NotFoundException(`Room with ID ${roomId} not found`);
+    }
+
+    // Map questions with their choices
+    const questions: RoomQuestionDto[] = room.roomQuestions.map((rq) => {
+      const question = rq.question;
+      const choices: RoomQuestionChoiceDto[] = question.choices.map((choice) => ({
+        id: choice.id,
+        value: choice.value,
+        isCorrect: choice.id === question.correctAnswerId,
+      }));
+
+      return {
+        id: question.id,
+        type: question.type,
+        description: question.description,
+        correctAnswerId: question.correctAnswerId,
+        choices,
+      };
+    });
+
+    return {
+      id: room.id,
+      title: room.title,
+      maxPlayers: room.maxPlayers,
+      status: room.status,
+      hasPassword: !!room.password,
+      startedAt: room.startedAt,
+      endedAt: room.endedAt,
+      createdById: room.createdById,
+      createdAt: room.createdAt,
+      updatedAt: room.updatedAt,
+      questions,
+    };
   }
 
   private toRoomResponse(room: Room): RoomResponseDto {

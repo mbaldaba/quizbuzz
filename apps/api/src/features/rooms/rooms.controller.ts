@@ -21,6 +21,7 @@ import type { User } from '@prisma/client';
 import { RoomsService } from './rooms.service';
 import { CreateRoomDto } from './dto/create-room.dto';
 import { RoomResponseDto } from './dto/room-response.dto';
+import { RoomDetailsResponseDto } from './dto/room-details-response.dto';
 import { ListRoomsQueryDto } from './dto/list-rooms-query.dto';
 import { PaginatedResponseDto } from '../../common/dto/paginated-response.dto';
 import { AdminOnly } from '../../common/decorators/admin-only.decorator';
@@ -62,6 +63,25 @@ export class RoomsController {
     @Query() query: ListRoomsQueryDto,
   ): Promise<PaginatedResponseDto<RoomResponseDto>> {
     return this.roomsService.listRooms(query.page ?? 1, query.perPage ?? 10);
+  }
+
+  @Get(':id')
+  @ApiOperation({ summary: 'Get room details by ID (Admin only)' })
+  @ApiParam({
+    name: 'id',
+    description: 'Room ID',
+    example: 'clh1234567890',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Room details retrieved successfully',
+    type: RoomDetailsResponseDto,
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - Admin access required' })
+  @ApiResponse({ status: 404, description: 'Room not found' })
+  async getRoomById(@Param('id') id: string): Promise<RoomDetailsResponseDto> {
+    return this.roomsService.getRoomById(id);
   }
 
   @Delete(':id')
