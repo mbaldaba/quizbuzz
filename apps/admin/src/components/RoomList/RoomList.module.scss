@@ -93,6 +93,44 @@
             font-family: monospace;
             color: $slate-200;
           }
+          
+          &.copyableId {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            
+            .copyButton {
+              display: inline-flex;
+              align-items: center;
+              justify-content: center;
+              padding: 0.125rem;
+              background: none;
+              border: none;
+              color: $slate-400;
+              cursor: pointer;
+              border-radius: $radius-sm;
+              @include transition;
+              
+              &:hover {
+                color: $sky-400;
+                background-color: rgba($sky-500, 0.1);
+              }
+              
+              &:active {
+                color: $sky-300;
+              }
+              
+              svg {
+                width: 0.75rem;
+                height: 0.75rem;
+                
+                @include respond-to(sm) {
+                  width: 0.875rem;
+                  height: 0.875rem;
+                }
+              }
+            }
+          }
         }
       }
       
