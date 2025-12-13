@@ -59,6 +59,25 @@ export class RoomsService {
         orderBy: {
           createdAt: 'desc',
         },
+        include: {
+          roomQuestions: {
+            include: {
+              question: {
+                include: {
+                  choices: {
+                    select: {
+                      id: true,
+                      value: true,
+                    },
+                  },
+                },
+              },
+            },
+            orderBy: {
+              createdAt: 'asc',
+            },
+          },
+        },
       }),
       this.prisma.room.count(),
     ]);
@@ -66,6 +85,37 @@ export class RoomsService {
     const roomResponses = rooms.map((room) => this.toRoomResponse(room));
 
     return new PaginatedResponseDto(roomResponses, total, page, perPage);
+  }
+
+  async findOne(roomId: string): Promise<RoomResponseDto> {
+    const room = await this.prisma.room.findUnique({
+      where: { id: roomId },
+      include: {
+        roomQuestions: {
+          include: {
+            question: {
+              include: {
+                choices: {
+                  select: {
+                    id: true,
+                    value: true,
+                  },
+                },
+              },
+            },
+          },
+          orderBy: {
+            createdAt: 'asc',
+          },
+        },
+      },
+    });
+
+    if (!room) {
+      throw new NotFoundException(`Room with ID ${roomId} not found`);
+    }
+
+    return this.toRoomResponse(room);
   }
 
   async deleteRoom(roomId: string): Promise<void> {
@@ -151,7 +201,19 @@ export class RoomsService {
     return this.toRoomResponse(updatedRoom);
   }
 
-  private toRoomResponse(room: Room): RoomResponseDto {
+  private toRoomResponse(room: Room & {
+    roomQuestions?: Array<{
+      question: {
+        id: string;
+        type: any;
+        description: string;
+        choices: Array<{
+          id: string;
+          value: string;
+        }>;
+      };
+    }>;
+  }): RoomResponseDto {
     return {
       id: room.id,
       title: room.title,
@@ -163,6 +225,12 @@ export class RoomsService {
       createdById: room.createdById,
       createdAt: room.createdAt,
       updatedAt: room.updatedAt,
+      questions: room.roomQuestions?.map((rq) => ({
+        id: rq.question.id,
+        type: rq.question.type,
+        description: rq.question.description,
+        choices: rq.question.choices,
+      })),
     };
   }
 }

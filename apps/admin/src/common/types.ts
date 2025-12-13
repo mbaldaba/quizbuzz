@@ -35,6 +35,7 @@ export interface IActiveRoom {
 	requiresPassword: boolean,
 	password?: string | null,
 	createdAt: string,
+	questions?: IQuestionData[],
 }
 
 export interface IPlayer {

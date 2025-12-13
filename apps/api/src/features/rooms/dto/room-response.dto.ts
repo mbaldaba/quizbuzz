@@ -1,5 +1,46 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { RoomStatus } from '@prisma/client';
+import { RoomStatus, QuestionType } from '@prisma/client';
+
+export class QuestionChoiceDto {
+  @ApiProperty({
+    description: 'Choice ID',
+    example: 'clh1234567890',
+  })
+  id: string;
+
+  @ApiProperty({
+    description: 'Choice value/text',
+    example: 'Paris',
+  })
+  value: string;
+}
+
+export class RoomQuestionDto {
+  @ApiProperty({
+    description: 'Question ID',
+    example: 'clh1234567890',
+  })
+  id: string;
+
+  @ApiProperty({
+    description: 'Question type',
+    enum: QuestionType,
+    example: QuestionType.MULTIPLE_CHOICE,
+  })
+  type: QuestionType;
+
+  @ApiProperty({
+    description: 'Question text/description',
+    example: 'What is the capital of France?',
+  })
+  description: string;
+
+  @ApiProperty({
+    description: 'Question choices',
+    type: [QuestionChoiceDto],
+  })
+  choices: QuestionChoiceDto[];
+}
 
 export class RoomResponseDto {
   @ApiProperty({
@@ -64,4 +105,11 @@ export class RoomResponseDto {
     example: '2025-11-30T12:00:00.000Z',
   })
   updatedAt: Date;
+
+  @ApiProperty({
+    description: 'Questions added to this room (in order)',
+    type: [RoomQuestionDto],
+    required: false,
+  })
+  questions?: RoomQuestionDto[];
 }

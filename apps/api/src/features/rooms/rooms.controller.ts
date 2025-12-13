@@ -64,6 +64,25 @@ export class RoomsController {
     return this.roomsService.listRooms(query.page ?? 1, query.perPage ?? 10);
   }
 
+  @Get(':id')
+  @ApiOperation({ summary: 'Get a room by ID (Admin only)' })
+  @ApiParam({
+    name: 'id',
+    description: 'Room ID',
+    example: 'clh1234567890',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Room retrieved successfully',
+    type: RoomResponseDto,
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - Admin access required' })
+  @ApiResponse({ status: 404, description: 'Room not found' })
+  async getRoom(@Param('id') id: string): Promise<RoomResponseDto> {
+    return this.roomsService.findOne(id);
+  }
+
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Delete a room (Admin only)' })

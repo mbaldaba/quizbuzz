@@ -8,6 +8,7 @@ import {
 } from "@repo/api-client";
 import { IActiveRoom, ActiveRoomEnum } from "../common/types";
 import { useSession } from "./useAuth";
+import { getRoomById, mapRoomFromApi as mapRoomWithQuestions } from "../common/api";
 
 // Local type for paginated rooms response (not exported from API client)
 type PaginatedRoomsResponseDto = {
@@ -20,6 +21,8 @@ export const roomKeys = {
 	all: ["rooms"] as const,
 	lists: () => [...roomKeys.all, "list"] as const,
 	list: (params?: { perPage?: number }) => [...roomKeys.lists(), params] as const,
+	details: () => [...roomKeys.all, "detail"] as const,
+	detail: (id: string) => [...roomKeys.details(), id] as const,
 };
 
 /**
@@ -122,6 +125,28 @@ export function useRooms(params?: { perPage?: number }) {
 		},
 		enabled: !!session,
 		staleTime: 1000 * 30, // 30 seconds
+		refetchOnWindowFocus: false,
+	});
+}
+
+/**
+ * Hook to fetch a single room by ID
+ * Uses React Query to cache and manage room state
+ */
+export function useRoomById(roomId: string | null) {
+	const { data: session } = useSession();
+
+	return useQuery({
+		queryKey: roomId ? roomKeys.detail(roomId) : ["rooms", "detail", "null"],
+		queryFn: async () => {
+			if (!roomId) {
+				throw new Error("Room ID is required");
+			}
+			const apiRoom = await getRoomById(roomId);
+			return mapRoomWithQuestions(apiRoom, session?.username || "You");
+		},
+		enabled: !!session && !!roomId,
+		staleTime: 1000 * 5, // 5 seconds - fresher data for individual room
 		refetchOnWindowFocus: false,
 	});
 }
