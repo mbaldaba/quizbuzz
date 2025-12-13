@@ -92,20 +92,23 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Logout and clear session' })
   @ApiResponse({ status: 200, description: 'Successfully logged out' })
-  @ApiResponse({ status: 401, description: 'No session found' })
   async logout(
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
   ): Promise<{ message: string }> {
     const sessionId = req.signedCookies?.sessionId;
 
-    if (!sessionId) {
-      throw new UnauthorizedException('No session found');
+    // Delete session if it exists (idempotent logout)
+    if (sessionId) {
+      try {
+        await this.authService.logout(sessionId);
+      } catch (error) {
+        // Ignore errors if session doesn't exist or is already deleted
+        // Logout should be idempotent
+      }
     }
 
-    await this.authService.logout(sessionId);
-
-    // Clear cookie
+    // Always clear the cookie, even if no session was found
     res.clearCookie('sessionId', {
       httpOnly: true,
       secure: this.config.get('NODE_ENV') === 'production',

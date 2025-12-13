@@ -8,7 +8,7 @@ import App from "./App";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <ApiClientProvider baseUrl="http://localhost:5000">
+    <ApiClientProvider baseUrl="http://localhost:4242" credentials="include">
       <BrowserRouter>
         <App />
       </BrowserRouter>

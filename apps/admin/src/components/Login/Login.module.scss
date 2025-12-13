@@ -1,0 +1,211 @@
+@use '../../styles/variables' as *;
+@use '../../styles/mixins' as *;
+
+.loginContainer {
+	min-height: 100vh;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: $spacing-md;
+	background: linear-gradient(135deg, $slate-950 0%, $slate-900 100%);
+	
+	@include respond-to(sm) {
+		padding: $spacing-lg;
+	}
+}
+
+.loginCard {
+	width: 100%;
+	max-width: 28rem;
+	background-color: rgba($slate-900, 0.8);
+	border: 1px solid $slate-800;
+	border-radius: $radius-xl;
+	padding: $spacing-xl;
+	box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
+	backdrop-filter: blur(8px);
+	
+	@include respond-to(sm) {
+		padding: $spacing-2xl;
+		border-radius: $radius-xl;
+	}
+}
+
+.loginHeader {
+	text-align: center;
+	margin-bottom: $spacing-xl;
+	
+	@include respond-to(sm) {
+		margin-bottom: $spacing-2xl;
+	}
+}
+
+.loginLabel {
+	font-size: 0.75rem;
+	font-weight: 500;
+	color: $slate-400;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+	margin-bottom: $spacing-sm;
+	
+	@include respond-to(sm) {
+		font-size: 0.875rem;
+	}
+}
+
+.loginTitle {
+	font-size: 1.5rem;
+	font-weight: 700;
+	color: $slate-50;
+	margin-bottom: $spacing-sm;
+	
+	@include respond-to(sm) {
+		font-size: 2rem;
+	}
+}
+
+.loginSubtitle {
+	font-size: 0.875rem;
+	color: $slate-400;
+	line-height: 1.5;
+	
+	@include respond-to(sm) {
+		font-size: 1rem;
+	}
+}
+
+.loginForm {
+	display: flex;
+	flex-direction: column;
+	gap: $spacing-md;
+}
+
+.formGroup {
+	display: flex;
+	flex-direction: column;
+}
+
+.formLabel {
+	display: block;
+	font-size: 0.75rem;
+	font-weight: 500;
+	color: $slate-200;
+	margin-bottom: 0.375rem;
+	
+	@include respond-to(sm) {
+		font-size: 0.875rem;
+	}
+}
+
+.formInput {
+	width: 100%;
+	border-radius: $radius-md;
+	border: 1px solid $slate-700;
+	background-color: rgba($slate-900, 0.6);
+	padding: 0.75rem $spacing-md;
+	color: $slate-50;
+	font-size: 0.875rem;
+	min-height: 2.75rem;
+	box-sizing: border-box;
+	@include transition;
+	
+	@include respond-to(sm) {
+		border-radius: $radius-lg;
+		padding: 0.875rem $spacing-md;
+		font-size: 0.875rem;
+		min-height: 3rem;
+	}
+	
+	@include respond-to(md) {
+		border-radius: $radius-xl;
+	}
+	
+	&::placeholder {
+		color: $slate-500;
+	}
+	
+	&:focus {
+		outline: none;
+		border-color: $sky-500;
+		background-color: rgba($slate-900, 0.8);
+		box-shadow: 0 0 0 3px rgba($sky-500, 0.1);
+	}
+}
+
+.formError {
+	font-size: 0.75rem;
+	color: $red-400;
+	background-color: rgba($red-950, 0.4);
+	border: 1px solid rgba($red-900, 0.6);
+	border-radius: $radius-lg;
+	padding: $spacing-sm $spacing-md;
+	
+	@include respond-to(sm) {
+		font-size: 0.875rem;
+	}
+}
+
+.btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	border-radius: $radius-md;
+	padding: 0.875rem $spacing-md;
+	font-size: 0.875rem;
+	font-weight: 600;
+	border: none;
+	cursor: pointer;
+	min-height: 3rem;
+	box-sizing: border-box;
+	white-space: nowrap;
+	@include transition;
+	
+	@include respond-to(sm) {
+		border-radius: $radius-lg;
+		padding: 0.875rem $spacing-lg;
+		font-size: 0.875rem;
+		min-height: 3rem;
+	}
+	
+	@include respond-to(md) {
+		border-radius: $radius-xl;
+	}
+	
+	&.btnPrimary {
+		background-color: $sky-500;
+		color: $slate-950;
+		border: 1px solid $sky-400;
+		
+		&:hover {
+			background-color: $sky-400;
+			transform: translateY(-1px);
+			box-shadow: 0 4px 12px rgba($sky-500, 0.3);
+		}
+		
+		&:active {
+			background-color: rgba($sky-500, 0.9);
+			transform: translateY(0);
+		}
+		
+		&:focus {
+			outline: none;
+			box-shadow: 0 0 0 3px rgba($sky-500, 0.3);
+		}
+		
+		&:disabled {
+			opacity: 0.6;
+			cursor: not-allowed;
+			transform: none;
+			
+			&:hover {
+				background-color: $sky-500;
+				transform: none;
+				box-shadow: none;
+			}
+		}
+	}
+	
+	&.btnFull {
+		width: 100%;
+	}
+}
+
