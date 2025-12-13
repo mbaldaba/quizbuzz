@@ -563,6 +563,49 @@ export async function endRoom(id: string): Promise<ApiRoom> {
 	return response.json();
 }
 
+export interface ApiRoomQuestion {
+	id: string;
+	type: "MULTIPLE_CHOICE" | "TRUE_OR_FALSE" | "IDENTIFICATION";
+	description: string;
+	correctAnswerId: string | null;
+	choices: Array<{
+		id: string;
+		value: string;
+		isCorrect: boolean;
+	}>;
+}
+
+export interface ApiRoomDetails {
+	id: string;
+	title: string;
+	maxPlayers: number;
+	status: ApiRoomStatus;
+	hasPassword: boolean;
+	startedAt: string | null;
+	endedAt: string | null;
+	createdById: string;
+	createdAt: string;
+	updatedAt: string;
+	questions: ApiRoomQuestion[];
+}
+
+export async function getRoomById(id: string): Promise<ApiRoomDetails> {
+	const response = await fetch(`${API_BASE_URL}/api/rooms/${id}`, {
+		method: "GET",
+		headers: {
+			"Content-Type": "application/json",
+		},
+		credentials: "include",
+	});
+
+	if (!response.ok) {
+		const error = await response.json().catch(() => ({ message: "Failed to fetch room details" }));
+		throw new Error(error.message || "Failed to fetch room details");
+	}
+
+	return response.json();
+}
+
 // ============================================================================
 // Quizmaster API
 // ============================================================================

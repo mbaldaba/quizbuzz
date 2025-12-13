@@ -1,7 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import toast from "react-hot-toast";
 import { IActiveRoom, IPlayer, IQuestionData, QuestionType } from "../../common/types";
-import { useRoomDetails } from "../../hooks/useRooms";
+import { getRoomById, type ApiRoomDetails, type ApiRoomQuestion } from "../../common/api";
 import styles from "./RoomDetails.module.scss";
 
 type RoomDetailsProps = {
@@ -11,24 +11,8 @@ type RoomDetailsProps = {
 	onClose: () => void;
 };
 
-// Type for API response question choice
-interface RoomQuestionChoiceDto {
-	id: string;
-	value: string;
-	isCorrect: boolean;
-}
-
-// Type for API response question
-interface RoomQuestionDto {
-	id: string;
-	type: "MULTIPLE_CHOICE" | "TRUE_OR_FALSE" | "IDENTIFICATION";
-	description: string;
-	correctAnswerId: string | null;
-	choices: RoomQuestionChoiceDto[];
-}
-
 // Union type to handle both API and local question formats
-type QuestionDisplay = IQuestionData | RoomQuestionDto;
+type QuestionDisplay = IQuestionData | ApiRoomQuestion;
 type ChoiceDisplay = { id: string; label?: string; text?: string; value?: string; isCorrect?: boolean };
 
 export default function RoomDetails({
@@ -39,9 +23,29 @@ export default function RoomDetails({
 }: RoomDetailsProps) {
 	const [currentQuestionIndex, setCurrentQuestionIndex] = useState<number>(0);
 	const [showAnswer, setShowAnswer] = useState<boolean>(false);
+	const [roomDetails, setRoomDetails] = useState<ApiRoomDetails | null>(null);
+	const [isLoading, setIsLoading] = useState(true);
+	const [error, setError] = useState<string | null>(null);
 
 	// Fetch room details by ID when modal is opened
-	const { data: roomDetails, isLoading, error } = useRoomDetails(room.id);
+	useEffect(() => {
+		const fetchRoomDetails = async () => {
+			try {
+				setIsLoading(true);
+				setError(null);
+				const details = await getRoomById(room.id);
+				setRoomDetails(details);
+			} catch (err) {
+				console.error("Failed to fetch room details:", err);
+				const errorMessage = err instanceof Error ? err.message : "Failed to load room details";
+				setError(errorMessage);
+			} finally {
+				setIsLoading(false);
+			}
+		};
+
+		fetchRoomDetails();
+	}, [room.id]);
 
 	// Use questions from API if available, otherwise fallback to props
 	const apiQuestions = roomDetails?.questions || [];
@@ -64,9 +68,9 @@ export default function RoomDetails({
 	};
 
 	const getAnswerDisplay = (question: QuestionDisplay): string => {
-		// Handle API response format (RoomQuestionDto)
+		// Handle API response format (ApiRoomQuestion)
 		if ('correctAnswerId' in question && question.correctAnswerId) {
-			const choice = question.choices?.find((c: RoomQuestionChoiceDto) => c.id === question.correctAnswerId);
+			const choice = question.choices?.find((c) => c.id === question.correctAnswerId);
 			return choice ? choice.value : "No answer provided";
 		}
 		
@@ -175,7 +179,7 @@ export default function RoomDetails({
 					{error && !isLoading && (
 						<div className={styles.questionSection}>
 							<div style={{ padding: "2rem", textAlign: "center", color: "#dc2626" }}>
-								Failed to load room details. Please try again.
+								{error}
 							</div>
 						</div>
 					)}
@@ -193,7 +197,7 @@ export default function RoomDetails({
 							</div>
 							<div className={styles.questionContent}>
 								<p className={styles.questionText}>
-									{currentQuestion.description || currentQuestion.text}
+									{'description' in currentQuestion ? currentQuestion.description : currentQuestion.text}
 								</p>
 								
 								{currentQuestion.choices && (
