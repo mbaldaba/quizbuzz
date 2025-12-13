@@ -564,6 +564,96 @@ export async function endRoom(id: string): Promise<ApiRoom> {
 }
 
 // ============================================================================
+// Quizmaster API
+// ============================================================================
+
+export interface NextQuestionResponse {
+	id: string;
+	type: "MULTIPLE_CHOICE" | "TRUE_OR_FALSE" | "IDENTIFICATION";
+	description: string;
+	choices: Array<{
+		id: string;
+		value: string;
+	}>;
+	roomId: string;
+	roomQuestionId: string;
+}
+
+export interface RevealAnswerResponse {
+	questionId: string;
+	revealed: boolean;
+	message: string;
+}
+
+export async function nextQuestion(roomId: string): Promise<NextQuestionResponse> {
+	const response = await fetch(`${API_BASE_URL}/api/quizmaster/next-question`, {
+		method: "POST",
+		headers: {
+			"Content-Type": "application/json",
+		},
+		credentials: "include",
+		body: JSON.stringify({ roomId }),
+	});
+
+	if (!response.ok) {
+		const error = await response.json().catch(() => ({ message: "Failed to get next question" }));
+		throw new Error(error.message || "Failed to get next question");
+	}
+
+	return response.json();
+}
+
+export async function revealAnswer(roomId: string, questionId: string): Promise<RevealAnswerResponse> {
+	const response = await fetch(`${API_BASE_URL}/api/quizmaster/reveal-answer`, {
+		method: "POST",
+		headers: {
+			"Content-Type": "application/json",
+		},
+		credentials: "include",
+		body: JSON.stringify({ roomId, questionId }),
+	});
+
+	if (!response.ok) {
+		const error = await response.json().catch(() => ({ message: "Failed to reveal answer" }));
+		throw new Error(error.message || "Failed to reveal answer");
+	}
+
+	return response.json();
+}
+
+/**
+ * Convert NextQuestionResponse to frontend IQuestionData
+ */
+export function mapNextQuestionResponseToQuestion(response: NextQuestionResponse): IQuestionData {
+	// Convert NextQuestionResponse to ApiQuestion format
+	const apiType = response.type === "MULTIPLE_CHOICE" 
+		? ApiQuestionType.MULTIPLE_CHOICE 
+		: response.type === "TRUE_OR_FALSE"
+		? ApiQuestionType.TRUE_OR_FALSE
+		: ApiQuestionType.IDENTIFICATION;
+	
+	// Convert choices to ApiQuestionChoice format (add isCorrect: false for now, will be revealed later)
+	const apiChoices: ApiQuestionChoice[] = response.choices.map(choice => ({
+		id: choice.id,
+		value: choice.value,
+		isCorrect: false, // Not revealed in next question response
+	}));
+	
+	const apiQuestion: ApiQuestion = {
+		id: response.id,
+		type: apiType,
+		description: response.description,
+		choices: apiChoices,
+		createdAt: new Date().toISOString(),
+		updatedAt: new Date().toISOString(),
+		createdBy: { id: "", username: "" },
+		updatedBy: { id: "", username: "" },
+	};
+	
+	return mapQuestionFromApi(apiQuestion);
+}
+
+// ============================================================================
 // Room Format Mapping Utilities
 // ============================================================================
 

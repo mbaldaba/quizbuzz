@@ -1,4 +1,5 @@
 import React from "react";
+import toast from "react-hot-toast";
 import { ActiveRoomEnum, IActiveRoom } from "../../common/types";
 import styles from "./RoomList.module.scss";
 
@@ -17,6 +18,16 @@ export default function RoomList({
 	onEndRoom,
 	onDeleteRoom,
 }: RoomListProps) {
+	const handleCopyRoomId = async (e: React.MouseEvent, roomId: string) => {
+		e.stopPropagation();
+		try {
+			await navigator.clipboard.writeText(roomId);
+			toast.success("Room ID copied to clipboard");
+		} catch (err) {
+			toast.error("Failed to copy room ID");
+		}
+	};
+
 	return (
 		<div className={styles.roomList}>
 			{rooms.length === 0 && (
@@ -42,6 +53,32 @@ export default function RoomList({
 									{room.roomNumber}
 								</span>
 							</p>
+							<div className={`${styles.roomMeta} ${styles.copyableId}`}>
+								Room ID:{" "}
+								<span className={styles.roomNumber}>{room.id}</span>
+								<button
+									type="button"
+									onClick={(e) => handleCopyRoomId(e, room.id)}
+									className={styles.copyButton}
+									title="Copy room ID"
+									aria-label="Copy room ID"
+								>
+									<svg
+										width="12"
+										height="12"
+										fill="none"
+										stroke="currentColor"
+										viewBox="0 0 24 24"
+									>
+										<path
+											strokeLinecap="round"
+											strokeLinejoin="round"
+											strokeWidth={2}
+											d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+										/>
+									</svg>
+								</button>
+							</div>
 							{room.requiresPassword && room.password && (
 								<p className={styles.roomMeta}>
 									Password:{" "}
