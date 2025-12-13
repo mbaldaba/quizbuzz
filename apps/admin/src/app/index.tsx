@@ -5,7 +5,6 @@ import RoomList from "../components/RoomList/RoomList";
 import RoomDetails from "../components/RoomDetails/RoomDetails";
 import QuestionManager from "../components/QuestionManager/QuestionManager";
 import { IActiveRoom, IQuestionData, ActiveRoomEnum, IPlayer } from "../common/types";
-import { mockPlayers } from "../data/staticData";
 import { useLogout, useSession } from "../hooks/useAuth";
 import {
 	getQuestions,
@@ -28,7 +27,7 @@ export default function AdminDashboard() {
 	const [rooms, setRooms] = useState<IActiveRoom[]>([]);
 	const [questions, setQuestions] = useState<IQuestionData[]>([]);
 	const [selectedRoom, setSelectedRoom] = useState<IActiveRoom | null>(null);
-	const [players, setPlayers] = useState<IPlayer[]>(mockPlayers);
+	const [players, setPlayers] = useState<IPlayer[]>([]);
 	const [questionsLoading, setQuestionsLoading] = useState(true);
 	const [questionsError, setQuestionsError] = useState<string | null>(null);
 	const [roomsLoading, setRoomsLoading] = useState(true);
