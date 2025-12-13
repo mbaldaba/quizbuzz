@@ -1,52 +1,39 @@
-import { Route, Routes, useNavigate } from "react-router-dom";
-import StudentJoinView from "../components/StudentJoinView";
-import { activeRoomsFromServer, sampleRoomPlayers } from "../data/staticData";
-import ProtectedClientPage from "../components/ProtectedClientPage";
-import StudentRoomView from "../components/StudentRoomView";
-import { setToken } from "../common/helpers";
-import RoomScoreboardView from "../components/RoomScoreboardView";
+import { Navigate, Route, Routes } from "react-router-dom";
+
+import ParticipantRoute from "@/features/participants/ParticipantRoute";
+import ScoreboardView from "@/features/participants/ScoreboardView";
+import StudentJoinView from "@/features/participants/StudentJoinView";
+import StudentRoomView from "@/features/participants/StudentRoomView";
 
 function App() {
-	const navigate = useNavigate();
+	return (
+		<Routes>
+			<Route
+				path="/"
+				element={<StudentJoinView />}
+			/>
 
-	const handleClickJoin = () => {
-		// TODO: join endpoint here
-		setToken("insert New Token");
-		navigate("/room");
-	}
-
-  return (
-		<>
-			<Routes>
+			<Route element={<ParticipantRoute />}>
 				<Route
-					path="/"
-					element={
-						<StudentJoinView
-							activeRooms={activeRoomsFromServer}
-							onJoin={handleClickJoin}
-						/>
-					}
+					path="/room/:roomId"
+					element={<StudentRoomView />}
 				/>
+				<Route
+					path="/room/:roomId/leaderboard"
+					element={<ScoreboardView />}
+				/>
+			</Route>
 
-				<Route element={<ProtectedClientPage />}>
-					<Route
-						path="/room"
-						element={<StudentRoomView />}
+			<Route
+				path="*"
+				element={
+					<Navigate
+						to="/"
+						replace
 					/>
-					<Route
-						path="/scoreboard"
-						element={
-							<RoomScoreboardView
-								roomCode="582991"
-								questionNumber={8}
-								totalQuestions={20}
-								players={sampleRoomPlayers}
-							/>
-						}
-					/>
-				</Route>
-			</Routes>
-		</>
+				}
+			/>
+		</Routes>
 	);
 }
 
