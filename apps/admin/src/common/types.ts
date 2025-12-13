@@ -25,7 +25,7 @@ export interface IQuestionData {
 };
 
 export interface IActiveRoom {
-	id: number,
+	id: string, // Changed to string to match API IDs
 	roomNumber: string,
 	title: string,
 	hostName: string,

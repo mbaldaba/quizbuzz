@@ -1,5 +1,4 @@
-import React, { useState, useEffect } from "react";
-import { IActiveRoom } from "../../common/types";
+import React, { useState } from "react";
 import styles from "./CreateRoomForm.module.scss";
 
 type CreateRoomFormProps = {
@@ -9,42 +8,16 @@ type CreateRoomFormProps = {
 		requiresPassword: boolean;
 		password?: string;
 	}) => void;
-	onUpdate?: (roomId: number, roomData: {
-		title: string;
-		maxPlayers?: number;
-		requiresPassword: boolean;
-		password?: string;
-	}) => void;
-	editingRoom?: IActiveRoom | null;
-	onCancel?: () => void;
 };
 
 export default function CreateRoomForm({ 
-	onCreate, 
-	onUpdate, 
-	editingRoom,
-	onCancel 
+	onCreate
 }: CreateRoomFormProps) {
 	const [title, setTitle] = useState("");
 	const [maxPlayers, setMaxPlayers] = useState<number | "">("");
 	const [requiresPassword, setRequiresPassword] = useState(true);
 	const [password, setPassword] = useState("");
 	const [error, setError] = useState("");
-
-	useEffect(() => {
-		if (editingRoom) {
-			setTitle(editingRoom.title);
-			setMaxPlayers(editingRoom.maxPlayers || "");
-			setRequiresPassword(editingRoom.requiresPassword);
-			setPassword(editingRoom.password || "");
-		} else {
-			setTitle("");
-			setMaxPlayers("");
-			setRequiresPassword(true);
-			setPassword("");
-		}
-		setError("");
-	}, [editingRoom]);
 
 	const handleSubmit = (e: React.FormEvent) => {
 		e.preventDefault();
@@ -67,11 +40,7 @@ export default function CreateRoomForm({
 			password: requiresPassword ? password.trim() : undefined,
 		};
 
-		if (editingRoom && onUpdate) {
-			onUpdate(editingRoom.id, roomData);
-		} else {
-			onCreate(roomData);
-		}
+		onCreate(roomData);
 
 		// Reset form
 		setTitle("");
@@ -149,20 +118,11 @@ export default function CreateRoomForm({
 			)}
 
 			<div className={styles.formActions}>
-				{editingRoom && onCancel && (
-					<button
-						type="button"
-						onClick={onCancel}
-						className={`${styles.btn} ${styles.btnSecondary} ${styles.btnFull}`}
-					>
-						Cancel
-					</button>
-				)}
 				<button
 					type="submit"
 					className={`${styles.btn} ${styles.btnPrimary} ${styles.btnFull}`}
 				>
-					{editingRoom ? "Update Room" : "Create Room"}
+					Create Room
 				</button>
 			</div>
 		</form>

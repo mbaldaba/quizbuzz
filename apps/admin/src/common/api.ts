@@ -434,3 +434,222 @@ export function mapQuestionFromApi(apiQuestion: ApiQuestion): IQuestionData {
 	};
 }
 
+// ============================================================================
+// Rooms API
+// ============================================================================
+
+export type ApiRoomStatus = "CREATED" | "ONGOING" | "ENDED";
+
+export interface ApiRoom {
+	id: string;
+	title: string;
+	maxPlayers: number;
+	status: ApiRoomStatus;
+	hasPassword: boolean;
+	startedAt: string | null;
+	endedAt: string | null;
+	createdById: string;
+	createdAt: string;
+	updatedAt: string;
+}
+
+export interface PaginatedRoomsResponse {
+	data: ApiRoom[];
+	meta: {
+		page: number;
+		perPage: number;
+		total: number;
+		totalPages: number;
+	};
+}
+
+export interface CreateRoomRequest {
+	title: string;
+	maxPlayers: number;
+	password?: string;
+}
+
+export async function getRooms(params?: {
+	page?: number;
+	perPage?: number;
+}): Promise<PaginatedRoomsResponse> {
+	const queryParams = new URLSearchParams();
+	if (params?.page) queryParams.append("page", params.page.toString());
+	if (params?.perPage) queryParams.append("perPage", params.perPage.toString());
+
+	const url = `${API_BASE_URL}/api/rooms${queryParams.toString() ? `?${queryParams.toString()}` : ""}`;
+	const response = await fetch(url, {
+		method: "GET",
+		headers: {
+			"Content-Type": "application/json",
+		},
+		credentials: "include",
+	});
+
+	if (!response.ok) {
+		const error = await response.json().catch(() => ({ message: "Failed to fetch rooms" }));
+		throw new Error(error.message || "Failed to fetch rooms");
+	}
+
+	return response.json();
+}
+
+export async function createRoom(
+	room: CreateRoomRequest
+): Promise<ApiRoom> {
+	const response = await fetch(`${API_BASE_URL}/api/rooms`, {
+		method: "POST",
+		headers: {
+			"Content-Type": "application/json",
+		},
+		credentials: "include",
+		body: JSON.stringify(room),
+	});
+
+	if (!response.ok) {
+		const error = await response.json().catch(() => ({ message: "Failed to create room" }));
+		throw new Error(error.message || "Failed to create room");
+	}
+
+	return response.json();
+}
+
+export async function deleteRoom(id: string): Promise<void> {
+	const response = await fetch(`${API_BASE_URL}/api/rooms/${id}`, {
+		method: "DELETE",
+		headers: {
+			"Content-Type": "application/json",
+		},
+		credentials: "include",
+	});
+
+	if (!response.ok) {
+		const error = await response.json().catch(() => ({ message: "Failed to delete room" }));
+		throw new Error(error.message || "Failed to delete room");
+	}
+}
+
+export async function startRoom(id: string): Promise<ApiRoom> {
+	const response = await fetch(`${API_BASE_URL}/api/rooms/${id}/start`, {
+		method: "PATCH",
+		headers: {
+			"Content-Type": "application/json",
+		},
+		credentials: "include",
+	});
+
+	if (!response.ok) {
+		const error = await response.json().catch(() => ({ message: "Failed to start room" }));
+		throw new Error(error.message || "Failed to start room");
+	}
+
+	return response.json();
+}
+
+export async function endRoom(id: string): Promise<ApiRoom> {
+	const response = await fetch(`${API_BASE_URL}/api/rooms/${id}/end`, {
+		method: "PATCH",
+		headers: {
+			"Content-Type": "application/json",
+		},
+		credentials: "include",
+	});
+
+	if (!response.ok) {
+		const error = await response.json().catch(() => ({ message: "Failed to end room" }));
+		throw new Error(error.message || "Failed to end room");
+	}
+
+	return response.json();
+}
+
+// ============================================================================
+// Room Format Mapping Utilities
+// ============================================================================
+
+import { IActiveRoom, ActiveRoomEnum } from "./types";
+
+/**
+ * Generate a short room number from room ID
+ */
+function generateRoomNumberFromId(id: string): string {
+	// Use first 4 characters of the ID, converting to uppercase
+	// If ID is shorter, pad with random chars
+	if (id.length >= 4) {
+		return id.substring(0, 4).toUpperCase();
+	}
+	// Fallback: use a hash-like approach
+	const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+	let result = id.toUpperCase().substring(0, id.length);
+	while (result.length < 4) {
+		result += chars.charAt(Math.floor(Math.random() * chars.length));
+	}
+	return result.substring(0, 4);
+}
+
+/**
+ * Convert API RoomStatus to frontend ActiveRoomEnum
+ */
+export function mapRoomStatusFromApi(status: ApiRoomStatus): ActiveRoomEnum {
+	switch (status) {
+		case "CREATED":
+			return ActiveRoomEnum.WAITING;
+		case "ONGOING":
+			return ActiveRoomEnum.ONGOING;
+		case "ENDED":
+			return ActiveRoomEnum.ENDED;
+		default:
+			return ActiveRoomEnum.WAITING;
+	}
+}
+
+/**
+ * Convert frontend ActiveRoomEnum to API RoomStatus
+ */
+export function mapRoomStatusToApi(status: ActiveRoomEnum): ApiRoomStatus {
+	switch (status) {
+		case ActiveRoomEnum.WAITING:
+			return "CREATED";
+		case ActiveRoomEnum.ONGOING:
+			return "ONGOING";
+		case ActiveRoomEnum.ENDED:
+			return "ENDED";
+		default:
+			return "CREATED";
+	}
+}
+
+/**
+ * Convert API ApiRoom to frontend IActiveRoom
+ */
+export function mapRoomFromApi(apiRoom: ApiRoom, hostName: string = "You"): IActiveRoom {
+	return {
+		id: apiRoom.id, // Keep original API ID as string
+		roomNumber: generateRoomNumberFromId(apiRoom.id),
+		title: apiRoom.title,
+		hostName,
+		status: mapRoomStatusFromApi(apiRoom.status),
+		players: 0, // TODO: Fetch actual player count from participants API
+		maxPlayers: apiRoom.maxPlayers,
+		requiresPassword: apiRoom.hasPassword,
+		password: null, // Password is not returned from API for security
+		createdAt: apiRoom.createdAt,
+	};
+}
+
+/**
+ * Convert frontend room data to API CreateRoomRequest
+ */
+export function mapRoomToApiCreate(roomData: {
+	title: string;
+	maxPlayers?: number;
+	requiresPassword: boolean;
+	password?: string;
+}): CreateRoomRequest {
+	return {
+		title: roomData.title,
+		maxPlayers: roomData.maxPlayers || 10, // Default to 10 if not specified
+		password: roomData.requiresPassword ? roomData.password : undefined,
+	};
+}
+
